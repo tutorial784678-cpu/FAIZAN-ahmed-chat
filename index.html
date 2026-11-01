@@ -9,17 +9,17 @@
   <style>
     :root {
       color-scheme: dark;
-      --night: #061438;
-      --navy: #091d50;
-      --blue: #287bea;
-      --cyan: #31d5e3;
-      --violet: #8152ed;
-      --pink: #cf62e9;
+      --night: #0b1220;
+      --navy: #17243a;
+      --blue: #3987f6;
+      --cyan: #59c7d5;
+      --violet: #7667df;
+      --pink: #b879d8;
       --white: #f7fbff;
-      --muted: #aab8d8;
-      --glass: rgba(12, 29, 76, .62);
-      --glass-strong: rgba(13, 30, 76, .84);
-      --line: rgba(181, 223, 255, .18);
+      --muted: #a9b7ca;
+      --glass: rgba(23, 36, 58, .78);
+      --glass-strong: rgba(20, 32, 51, .94);
+      --line: rgba(190, 210, 232, .14);
       --shadow: 0 24px 70px rgba(0,0,0,.34);
     }
     * { box-sizing: border-box; }
@@ -238,6 +238,40 @@
     .incoming-actions{display:flex;justify-content:center;gap:14px;margin-top:22px}.incoming-actions button{min-width:120px}
     @media(max-width:520px){.call-card{padding:15px;border-radius:22px}.call-videos{grid-template-columns:1fr}.call-videos video{max-height:34dvh}.call-controls button{flex:1 1 42%;padding:12px 8px}}
 
+
+    /* Clean, calmer interface */
+    body{background:radial-gradient(ellipse at 12% 0%,#18364a 0,transparent 38%),linear-gradient(145deg,#0b1422,#111d31 58%,#1a1c37)}
+    .glass{background:rgba(20,32,50,.82);border-color:rgba(200,220,240,.12);box-shadow:0 18px 50px rgba(0,0,0,.18);backdrop-filter:blur(18px)}
+    .topbar,.sidebar,.chat-panel,.profile-panel{border-radius:20px}
+    .primary-btn{background:linear-gradient(110deg,#347fe8,#7662d6);box-shadow:0 8px 22px rgba(62,112,218,.18)}
+    .secondary-btn,.icon-btn{background:rgba(255,255,255,.055);border-color:rgba(194,215,238,.17)}
+    .call-overlay{padding:0;background:#05080e;backdrop-filter:none}
+    .call-card{position:relative;width:100%;height:100%;max-height:none;max-width:none;border:0;border-radius:0;padding:0;background:#080d17;display:flex;flex-direction:column;overflow:hidden;box-shadow:none}
+    .call-title{position:absolute;z-index:4;top:max(18px,env(safe-area-inset-top));left:18px;right:18px;margin:0;text-align:center;font-size:1rem;text-shadow:0 2px 8px #000}
+    .call-status{position:absolute;z-index:4;top:52px;left:18px;right:18px;margin:0;text-align:center;font-size:.8rem;text-shadow:0 2px 8px #000}
+    .call-stage{position:relative;flex:1;min-height:0;background:#101827;overflow:hidden}
+    #remoteCallVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#101827;border:0;border-radius:0}
+    #localCallVideo{position:absolute;z-index:3;right:16px;top:max(88px,calc(env(safe-area-inset-top) + 78px));width:clamp(104px,28vw,156px);height:clamp(145px,25vh,210px);object-fit:cover;background:#26364a;border:2px solid rgba(255,255,255,.8);border-radius:18px;box-shadow:0 8px 26px #0008}
+    .call-videos{display:contents}
+    .call-videos.audio-mode{display:none}
+    .call-videos.audio-mode #localCallVideo{display:none}
+    .audio-avatar-wrap{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(circle at 50% 38%,#293d59,#111b2b 62%,#090e18)}
+    .audio-avatar{width:clamp(120px,34vw,180px);height:clamp(120px,34vw,180px);border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(140deg,#3686b9,#7763ce);border:3px solid rgba(255,255,255,.65);font-size:2.7rem;font-weight:800;box-shadow:0 15px 55px #0008}
+    .audio-avatar img{width:100%;height:100%;object-fit:cover}
+    .audio-avatar-wrap strong{font-size:1.25rem}.audio-avatar-wrap span{color:#b6c4d6;font-size:.85rem}
+    .call-controls{position:relative;z-index:5;margin:0;padding:18px 14px max(22px,env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(3,7,13,.96) 20%);gap:10px}
+    .call-controls button{flex:0 1 auto;min-width:64px;min-height:58px;border-radius:18px;background:#263448;border:1px solid #ffffff20;padding:10px 13px;font-size:.82rem}
+    .call-controls button.danger{background:#d83c50;border-color:#f07a88;min-width:100px}
+    .incoming-card{height:auto;max-height:80vh;width:min(420px,calc(100% - 28px));border-radius:28px;padding:28px 20px;background:linear-gradient(145deg,#1b2e48,#171c32);border:1px solid #ffffff24;align-self:center;justify-content:center}
+    .incoming-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .settings-modal{max-width:500px;max-height:90dvh;overflow:auto}
+    .settings-profile-row{display:flex;align-items:center;gap:12px;margin:18px 0;padding:13px;border-radius:17px;background:#ffffff08}
+    .settings-profile-row>div:nth-child(2){flex:1;min-width:0}.settings-avatar{width:54px;height:54px;flex-basis:54px}
+    .settings-form{display:grid;gap:9px}.settings-form h4{margin:0 0 3px}.settings-form input{width:100%;border:1px solid var(--line);border-radius:13px;padding:13px 14px;background:#0e1929;color:white;outline:none}
+    .settings-form label{font-size:.82rem;color:#b7c6d8}.settings-form .primary-btn{width:100%;margin-top:5px}
+    .settings-divider{height:1px;background:#ffffff16;margin:19px 0}.settings-signout{width:100%;color:#ff9eaa}
+    @media(max-width:520px){.app-view{padding:9px}.app-shell{gap:9px}.topbar{padding:9px 11px;min-height:58px}.topbar .online-pill{display:none}.top-actions{gap:5px}.top-actions .secondary-btn{padding:8px 10px}.call-controls{gap:7px;padding-left:9px;padding-right:9px}.call-controls button{font-size:.73rem;min-width:56px;padding:9px 8px}.call-controls button.danger{min-width:80px}}
+
   </style>
 </head>
 <body>
@@ -288,6 +322,7 @@
           <div class="online-pill"><span class="online-dot"></span> Connected</div>
           <button id="scanTopBtn" class="icon-btn" type="button" title="Scan a QR code" aria-label="Scan QR">▦</button>
           <button id="myQrBtn" class="secondary-btn" type="button">My QR</button>
+          <button id="settingsBtn" class="icon-btn" type="button" title="Settings" aria-label="Settings">⚙</button>
           <button id="signOutBtn" class="quiet-btn" type="button">Sign out</button>
         </div>
       </header>
@@ -341,7 +376,8 @@
               <div class="call-card">
                 <div class="call-title" id="callTitle">Faizan Ahmed Chats</div>
                 <div class="call-status" id="callStatus">Connecting…</div>
-                <div class="call-videos" id="callVideos">
+                <div class="call-stage" id="callStage">
+                  <div class="audio-avatar-wrap hidden" id="audioAvatarWrap"><div class="audio-avatar" id="audioCallAvatar">FA</div><strong id="audioCallName"></strong><span>Audio call</span></div>
                   <video id="remoteCallVideo" autoplay playsinline></video>
                   <video id="localCallVideo" autoplay muted playsinline></video>
                 </div>
@@ -394,6 +430,26 @@
   </section>
 
   <input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" />
+  <div id="settingsModal" class="modal-backdrop hidden">
+    <div class="modal glass settings-modal">
+      <div class="modal-head"><div><div class="eyebrow">ACCOUNT PREFERENCES</div><h3>Settings</h3></div><button class="icon-btn" type="button" data-close="settingsModal">×</button></div>
+      <div class="settings-profile-row"><div id="settingsAvatar" class="avatar settings-avatar">FA</div><div><strong id="settingsName">Your profile</strong><div class="muted" id="settingsUsername">@username</div></div><button id="settingsPhotoBtn" class="secondary-btn" type="button">Change photo</button></div>
+      <form id="settingsProfileForm" class="settings-form">
+        <label for="settingsDisplayName">Display name</label><input id="settingsDisplayName" maxlength="40" placeholder="Your display name" />
+        <button class="primary-btn" type="submit">Save profile</button>
+      </form>
+      <div class="settings-divider"></div>
+      <form id="settingsPasswordForm" class="settings-form">
+        <h4>Change password</h4>
+        <label for="newPassword">New password</label><input id="newPassword" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" required />
+        <label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Repeat new password" required />
+        <button class="primary-btn" type="submit">Update password</button>
+      </form>
+      <div class="settings-divider"></div>
+      <button id="settingsSignOutBtn" class="quiet-btn settings-signout" type="button">Sign out of this account</button>
+      <p class="privacy-note">Your password is securely managed by Supabase Authentication. Never share it with anyone.</p>
+    </div>
+  </div>
 
   <div id="qrModal" class="modal-backdrop hidden">
     <div class="modal glass">
@@ -751,6 +807,14 @@
       function showCallUI(video){
         state.callVideoMode=!!video;
         $('callVideos').classList.toggle('audio-mode',!video);
+        $('audioAvatarWrap').classList.toggle('hidden',!!video);
+        $('remoteCallVideo').classList.toggle('hidden',!video);
+        $('localCallVideo').classList.toggle('hidden',!video);
+        const peer=state.activePerson||{};
+        const avatarNode=$('audioCallAvatar');avatarNode.innerHTML='';
+        if(peer.avatar_url){const im=document.createElement('img');im.src=peer.avatar_url;im.alt='Contact photo';avatarNode.appendChild(im);}
+        else avatarNode.textContent=(peer.display_name||peer.username||'FA').split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+        $('audioCallName').textContent=peer.display_name||peer.username||'Contact';
         $('callOverlay').classList.remove('hidden');
         $('callTitle').textContent=(video?'Video call with ':'Audio call with ')+(state.activePerson?.display_name||state.activePerson?.username||'Contact');
         $('callStatus').textContent='Connecting…';
@@ -884,7 +948,9 @@
                 if(state.pc||state.incomingSignal)return;
                 state.incomingSignal=sig;
                 $('incomingCallName').textContent=state.activePerson?.display_name||state.activePerson?.username||'Someone';
-                $('incomingCallAvatar').textContent=(state.activePerson?.display_name||state.activePerson?.username||'FA').slice(0,2).toUpperCase();
+                $('incomingCallAvatar').innerHTML='';
+                if(state.activePerson?.avatar_url){const av=document.createElement('img');av.src=state.activePerson.avatar_url;av.alt='Caller photo';$('incomingCallAvatar').appendChild(av);}
+                else $('incomingCallAvatar').textContent=(state.activePerson?.display_name||state.activePerson?.username||'FA').slice(0,2).toUpperCase();
                 $('incomingCallType').textContent=sig.payload?.video?'Incoming video call':'Incoming audio call';
                 $('incomingCallOverlay').classList.remove('hidden');
                 if(navigator.vibrate)navigator.vibrate([400,200,400,200,700]);
@@ -973,7 +1039,7 @@
           const { data: publicData } = db.storage.from('profile-photos').getPublicUrl(path);
           const { data, error } = await db.from('profiles').update({ avatar_url: publicData.publicUrl }).eq('id', state.user.id).select(PROFILE_FIELDS).single();
           if (error) throw error;
-          state.profile = data; renderOwnProfile(); await loadChats();
+          state.profile = data; renderOwnProfile(); if(!$('settingsModal').classList.contains('hidden')){setAvatar($('settingsAvatar'),data);$('settingsName').textContent=data.display_name||data.username;} await loadChats();
           toast('Profile photo updated.');
         } catch (error) { toast(error.message || 'Could not upload this photo.'); }
         finally { $('photoInput').value = ''; }
@@ -986,6 +1052,47 @@
         try { await findUser(code, true); }
         finally { const clean = new URL(window.location.href); clean.searchParams.delete('user'); window.history.replaceState({}, '', clean.pathname + clean.search); }
       }
+
+
+      function openSettings(){
+        const p=state.profile||{};
+        setAvatar($('settingsAvatar'),p);
+        $('settingsName').textContent=p.display_name||p.username||'Your profile';
+        $('settingsUsername').textContent='@'+(p.username||'');
+        $('settingsDisplayName').value=p.display_name||'';
+        $('settingsModal').classList.remove('hidden');
+      }
+      $('settingsBtn').addEventListener('click',openSettings);
+      $('settingsPhotoBtn').addEventListener('click',choosePhoto);
+      $('settingsProfileForm').addEventListener('submit',async e=>{
+        e.preventDefault();
+        const display_name=$('settingsDisplayName').value.trim();
+        if(!display_name){toast('Please enter a display name.');return;}
+        try{
+          const {data,error}=await db.from('profiles').update({display_name}).eq('id',state.user.id).select(PROFILE_FIELDS).single();
+          if(error)throw error;
+          state.profile=data;renderOwnProfile();$('settingsName').textContent=data.display_name||data.username;
+          toast('Profile updated.');
+        }catch(err){toast(err.message||'Could not update profile.');}
+      });
+      $('settingsPasswordForm').addEventListener('submit',async e=>{
+        e.preventDefault();
+        const a=$('newPassword').value,b=$('confirmPassword').value;
+        if(a.length<8){toast('Password must be at least 8 characters.');return;}
+        if(a!==b){toast('Passwords do not match.');return;}
+        try{
+          const {error}=await db.auth.updateUser({password:a});
+          if(error)throw error;
+          $('settingsPasswordForm').reset();toast('Password changed successfully.');
+        }catch(err){toast(err.message||'Could not change password.');}
+      });
+      $('settingsSignOutBtn').addEventListener('click',async()=>{
+        $('settingsModal').classList.add('hidden');
+        $('signOutBtn').click();
+      });
+      document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>{
+        const id=btn.getAttribute('data-close');if(id)$(id)?.classList.add('hidden');
+      }));
 
       $('signOutBtn').addEventListener('click', async () => {
         await stopScanner();
