@@ -735,7 +735,19 @@
           state.recorder.start();$('voiceBtn').textContent='■';toast('Recording… tap stop when finished.');
         } catch(e){toast('Microphone permission is required for voice messages.');}
       });
+      // STUN helps discover public routes. TURN credentials must be configured for
+      // reliable calls across restrictive mobile/Wi-Fi networks.
       const rtcConfig={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+      function waitForIceGathering(pc,timeoutMs=12000){
+        if(pc.iceGatheringState==='complete')return Promise.resolve();
+        return new Promise(resolve=>{
+          let done=false;
+          const finish=()=>{if(done)return;done=true;clearTimeout(timer);pc.removeEventListener('icegatheringstatechange',check);resolve();};
+          const check=()=>{if(pc.iceGatheringState==='complete')finish();};
+          const timer=setTimeout(finish,timeoutMs);
+          pc.addEventListener('icegatheringstatechange',check);
+        });
+      }
       function showCallUI(video){
         state.callVideoMode=!!video;
         $('callVideos').classList.toggle('audio-mode',!video);
@@ -752,7 +764,10 @@
         state.pc=new RTCPeerConnection(rtcConfig);
         state.remoteStream=new MediaStream();
         $('remoteCallVideo').srcObject=state.remoteStream;
+        $('remoteCallVideo').muted=true; // Play remote sound only once through the audio element.
         $('remoteCallAudio').srcObject=state.remoteStream;
+        $('remoteCallAudio').muted=false;
+        $('remoteCallAudio').volume=1;
         state.pc.ontrack=e=>{
           const streams=e.streams?.length?e.streams:[];
           if(streams.length){streams[0].getTracks().forEach(t=>{if(!state.remoteStream.getTracks().some(x=>x.id===t.id))state.remoteStream.addTrack(t);});}
@@ -760,11 +775,12 @@
           $('callStatus').textContent='Connected';
           $('remoteCallVideo').play().catch(()=>{});$('remoteCallAudio').play().catch(()=>{});
         };
-        state.pc.onicecandidate=e=>{if(e.candidate)sendSignal('ice',{candidate:e.candidate}).catch(err=>toast(err.message));};
+        // Use non-trickle ICE below: wait for gathering to finish, then send
+        // the complete SDP so candidates cannot arrive before the offer/answer.
         state.pc.onconnectionstatechange=()=>{
           const c=state.pc?.connectionState;
           if(c==='connected')$('callStatus').textContent='Connected';
-          if(c==='failed')$('callStatus').textContent='Connection failed — TURN server may be required';
+          if(c==='failed')$('callStatus').textContent='Network connection failed. TURN server is required on some networks.';
           if(c==='disconnected')$('callStatus').textContent='Reconnecting…';
         };
       }
@@ -779,7 +795,9 @@
           showCallUI(video);$('localCallVideo').srcObject=state.localStream;
           setupPeer();state.localStream.getTracks().forEach(t=>state.pc.addTrack(t,state.localStream));
           const offer=await state.pc.createOffer();await state.pc.setLocalDescription(offer);
-          await sendSignal('offer',{sdp:offer,video:!!video});
+          $('callStatus').textContent='Preparing secure connection…';
+          await waitForIceGathering(state.pc);
+          await sendSignal('offer',{sdp:state.pc.localDescription,video:!!video});
           $('callStatus').textContent='Calling… waiting for answer';
         }catch(e){await cleanupCall(false);toast(e.message||'Could not start call.');}
       }
@@ -808,7 +826,9 @@
           state.localStream.getTracks().forEach(t=>state.pc.addTrack(t,state.localStream));
           await state.pc.setRemoteDescription(sig.payload.sdp);
           const answer=await state.pc.createAnswer();await state.pc.setLocalDescription(answer);
-          await sendSignal('answer',{sdp:answer},sig.sender_id);
+          $('callStatus').textContent='Preparing secure connection…';
+          await waitForIceGathering(state.pc);
+          await sendSignal('answer',{sdp:state.pc.localDescription},sig.sender_id);
           $('callStatus').textContent='Connecting…';
         }catch(e){await cleanupCall(false);toast(e.message||'Could not accept call.');}
       }
@@ -824,7 +844,7 @@
             return;
           }
           if(!navigator.mediaDevices.getDisplayMedia)throw new Error('Screen sharing is not supported in this browser.');
-          const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+          const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});
           state.screenStream=stream;
           const track=stream.getVideoTracks()[0],sender=state.pc.getSenders().find(x=>x.track?.kind==='video');
           if(sender)await sender.replaceTrack(track);else state.pc.addTrack(track,stream);
@@ -841,7 +861,7 @@
         tracks.forEach(t=>t.enabled=muted);$('muteCallBtn').textContent=muted?'🎙 Mute':'🔇 Unmute';$('muteCallBtn').classList.toggle('active',!muted);
       });
       $('speakerCallBtn').addEventListener('click',()=>{
-        state.speakerOn=!state.speakerOn;$('remoteCallAudio').muted=!state.speakerOn;$('remoteCallVideo').muted=!state.speakerOn;
+        state.speakerOn=!state.speakerOn;$('remoteCallAudio').muted=!state.speakerOn;$('remoteCallVideo').muted=true;
         $('speakerCallBtn').textContent=state.speakerOn?'🔊 Speaker':'🔈 Speaker off';$('speakerCallBtn').classList.toggle('active',!state.speakerOn);
       });
       $('cameraCallBtn').addEventListener('click',()=>{
