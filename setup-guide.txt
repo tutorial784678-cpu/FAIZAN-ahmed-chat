@@ -1,0 +1,84 @@
+FAIZAN AHMED CHATS — FLAT PWA / PUSH SETUP
+==========================================
+
+ZIP LAYOUT (ALL FILES AT ROOT — NO SUBFOLDERS)
+- index.html
+- sw.js
+- manifest.json
+- icon.svg, icon-192.png, icon-512.png
+- send-push.ts (Supabase Edge Function source)
+- send-push-deno.json (Deno import/config metadata)
+- push-subscriptions-migration.sql (database migration source)
+- README.txt
+- this guide and testing-report.txt
+
+IMPORTANT LIMITATIONS
+1. Push requires HTTPS (localhost is allowed for development), a supported browser, and notification permission on every device.
+2. On Android, install the website as a PWA for the best app-like behavior. The operating system/browser controls notification presentation, sound, vibration and actions. A website cannot force WhatsApp's native full-screen call UI or override Do Not Disturb / silent mode.
+3. Notification sound is controlled by device/browser notification settings. A closed webpage cannot force a custom ringtone to play.
+4. send-push.ts is source only; it has NOT been deployed by this ZIP. VAPID keys must be generated and configured first.
+5. Calls still need a TURN relay for reliable connectivity across restrictive mobile/carrier/Wi-Fi networks. Push notification delivery does not itself provide real-time audio/video.
+
+STEP 1 — UPLOAD WEBSITE FILES
+Upload these files to your Vercel project's public/root output directory:
+  index.html
+  manifest.json
+  sw.js
+  icon.svg
+  icon-192.png
+  icon-512.png
+Do not upload the .ts, .json configuration, or .sql source files into a public web directory. Keep those on your computer for Supabase setup.
+
+STEP 2 — GENERATE VAPID KEYS
+On a trusted computer with Node.js:
+  npx web-push generate-vapid-keys
+This prints PUBLIC and PRIVATE keys.
+- Put the PUBLIC key into index.html by replacing PASTE_VAPID_PUBLIC_KEY_HERE in PUSH_VAPID_PUBLIC_KEY.
+- Keep the PRIVATE key secret. Never put it in index.html, a public repository, or a public ZIP.
+
+STEP 3 — DATABASE MIGRATION
+The push_subscriptions table already exists in the connected Supabase project (drpqwvnjdzalhcvfrocg). The preferences and owner-only RLS migration was applied successfully during package preparation. Do not run it again on that same project unless you first inspect the current schema.
+For another project, inspect the table, then run push-subscriptions-migration.sql in Supabase Dashboard > SQL Editor.
+
+STEP 4 — DEPLOY THE EDGE FUNCTION
+The ZIP is deliberately flat, so the Supabase CLI's standard folder layout is not present. For CLI deployment, create this folder on your own computer:
+  supabase/functions/send-push/
+Copy send-push.ts to:
+  supabase/functions/send-push/index.ts
+Copy send-push-deno.json to:
+  supabase/functions/send-push/deno.json
+Then run from the project folder:
+  supabase link --project-ref drpqwvnjdzalhcvfrocg
+  supabase functions deploy send-push
+Alternatively, create an Edge Function named send-push in the Supabase Dashboard and paste the contents of send-push.ts as its source, if the Dashboard editor supports your deployment flow.
+
+STEP 5 — CONFIGURE SECRETS
+Set these secrets via Supabase Dashboard > Edge Functions > Secrets or CLI:
+  VAPID_PUBLIC_KEY=YOUR_PUBLIC_KEY
+  VAPID_PRIVATE_KEY=YOUR_PRIVATE_KEY
+  VAPID_SUBJECT=mailto:you@example.com
+Supabase provides managed project environment values to Edge Functions. Never expose the service-role key in index.html or the browser.
+
+STEP 6 — ENABLE NOTIFICATIONS ON EACH DEVICE
+1. Deploy the website over HTTPS.
+2. Sign in to Faizan Ahmed Chats.
+3. Open Settings > Notifications > Enable.
+4. Allow browser notifications.
+5. On Android Chrome, use the browser menu > Install app / Add to Home screen for PWA-like behavior.
+6. Repeat on every device that should receive alerts. Push subscription is per browser/device.
+
+STEP 7 — TEST
+- Sign in with account A on device A and account B on device B.
+- Enable notifications on device B.
+- Send a message from A to B. B's registered device should receive a push if browser/OS support and permissions allow it.
+- Place an audio/video call from A to B. B should receive a push notification with call actions where supported.
+- Open call action takes the user to the app; the user accepts inside the app to grant microphone/camera access.
+- Decline action should route back to the app and send decline signaling.
+
+FILES
+HTML, ZIP, PDF and unknown file types are shared as downloads rather than executed in chat. The app-side current upload cap is 100 MB. Increase the Storage bucket limit separately if larger files are needed.
+
+SECURITY
+- VAPID private key and Supabase service-role key are server-side secrets only.
+- The Edge Function validates the signed-in sender and checks the message/call record before sending push.
+- Lock-screen previews may expose sender names or message previews; configure device privacy settings as needed.

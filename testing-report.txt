@@ -1,0 +1,27 @@
+FAIZAN AHMED CHATS — IMPLEMENTATION / TEST REPORT
+==================================================
+PACKAGE DATE: 2026-11-02
+SUPABASE PROJECT REF: drpqwvnjdzalhcvfrocg
+PACKAGE LAYOUT: FLAT — ALL FILES AT ZIP ROOT; NO supabase/ DIRECTORY
+
+VERIFIED / CONFIRMED
+- Package contains index.html, manifest.json, sw.js, PWA icons, setup guide, testing report, Edge Function source and SQL source.
+- Supabase push_subscriptions table exists in the connected project.
+- Database migration adding message/call/sound preference columns and owner-only RLS policies was applied successfully to project drpqwvnjdzalhcvfrocg.
+- Earlier package preparation included frontend subscription flow, notification settings, message/call push invocation hooks, service-worker push display and notification click routing.
+- Earlier syntax/manifest/archive checks were reported as passing for the package build.
+
+NOT VERIFIED / STILL REQUIRES CONFIGURATION
+- VAPID keys have not been generated or embedded. Replace PASTE_VAPID_PUBLIC_KEY_HERE in index.html and configure matching VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT secrets in Supabase.
+- send-push.ts has not been deployed as a Supabase Edge Function from this flattened archive.
+- Real push delivery to a second physical device has not been tested.
+- Browser/OS notification sound, vibration, lock-screen rendering and action behavior vary by device and were not physically tested.
+- A webpage cannot force a WhatsApp-equivalent native full-screen call screen while completely closed.
+- Audio/video calling across all networks is not certified; TURN credentials are still recommended/required on some networks.
+
+DEPLOYMENT NOTES
+- Upload only index.html, sw.js, manifest.json and icon assets to Vercel's public web root.
+- Keep send-push.ts, send-push-deno.json and push-subscriptions-migration.sql as setup/source files. The flat package intentionally does not contain a supabase/ folder. Create the standard Supabase CLI directory structure locally only when deploying the Edge Function.
+
+CONCLUSION
+The ZIP is a flat source/setup package. Do not treat background push delivery as production-ready until VAPID secrets are configured, send-push is deployed, and delivery is tested between two real devices.
