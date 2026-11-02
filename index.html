@@ -3,11 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#101d32" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#07163f" />
   <meta name="description" content="Faizan Ahmed Chats — a private, real-time messaging space with unique chat IDs, QR contact sharing and profile photos." />
   <title>Faizan Ahmed Chats</title>
   <style>
@@ -276,11 +272,6 @@
     .settings-divider{height:1px;background:#ffffff16;margin:19px 0}.settings-signout{width:100%;color:#ff9eaa}
     @media(max-width:520px){.app-view{padding:9px}.app-shell{gap:9px}.topbar{padding:9px 11px;min-height:58px}.topbar .online-pill{display:none}.top-actions{gap:5px}.top-actions .secondary-btn{padding:8px 10px}.call-controls{gap:7px;padding-left:9px;padding-right:9px}.call-controls button{font-size:.73rem;min-width:56px;padding:9px 8px}.call-controls button.danger{min-width:80px}}
 
-
-    .push-settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#ffffff08}
-    .push-check{display:flex!important;align-items:center;gap:9px;font-size:.88rem!important}
-    .push-check input{width:18px;height:18px;accent-color:#3987f6}
-
   </style>
 </head>
 <body>
@@ -380,7 +371,7 @@
               <input id="messageInput" maxlength="5000" placeholder="Write a message…" autocomplete="off" aria-label="Message" />
               <button class="send-btn" type="submit" title="Send message" aria-label="Send">➤</button>
             </form>
-            <input id="attachmentInput" class="hidden" type="file"  />
+            <input id="attachmentInput" class="hidden" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.xlsx,.pptx" />
             <div id="callOverlay" class="call-overlay hidden" role="dialog" aria-modal="true" aria-label="Call controls">
               <div class="call-card">
                 <div class="call-title" id="callTitle">Faizan Ahmed Chats</div>
@@ -392,7 +383,6 @@
                 </div>
                 <audio id="remoteCallAudio" autoplay></audio>
                 <div class="call-controls">
-                  <button id="enableSoundBtn" class="hidden active" type="button">🔊 Enable sound</button>
                   <button id="muteCallBtn" type="button">🎙 Mute</button>
                   <button id="speakerCallBtn" type="button">🔊 Speaker</button>
                   <button id="cameraCallBtn" type="button">📷 Camera off</button>
@@ -455,16 +445,6 @@
         <label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Repeat new password" required />
         <button class="primary-btn" type="submit">Update password</button>
       </form>
-
-      <div class="settings-divider"></div>
-      <section class="settings-form" aria-label="Notification settings">
-        <h4>Notifications</h4>
-        <p class="privacy-note" style="margin:0">Enable browser notifications so messages and incoming calls can reach this device while the website is in the background.</p>
-        <div class="push-settings-row"><div><strong>Push notifications</strong><div id="pushStatus" class="muted">Not enabled on this device</div></div><button id="pushNotificationsBtn" class="secondary-btn" type="button">Enable</button></div>
-        <label class="push-check"><input id="notifyMessages" type="checkbox" checked /> Message alerts</label>
-        <label class="push-check"><input id="notifyCalls" type="checkbox" checked /> Incoming call alerts</label>
-        <label class="push-check"><input id="notifySound" type="checkbox" checked /> Use device notification sound</label>
-      </section>
       <div class="settings-divider"></div>
       <button id="settingsSignOutBtn" class="quiet-btn settings-signout" type="button">Sign out of this account</button>
       <p class="privacy-note">Your password is securely managed by Supabase Authentication. Never share it with anyone.</p>
@@ -502,15 +482,13 @@
       // Public/publishable client key only. Never put a Supabase service-role key in this file.
       const SUPABASE_URL = 'https://drpqwvnjdzalhcvfrocg.supabase.co';
       const SUPABASE_KEY = 'sb_publishable_mb48qg4kM05FL1skATwoWg_2u2TCbmA';
-      // Paste the VAPID PUBLIC key generated during setup. Never put the private key here.
-      const PUSH_VAPID_PUBLIC_KEY = 'PASTE_VAPID_PUBLIC_KEY_HERE';
       const { createClient } = window.supabase;
       const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
       });
 
       const $ = (id) => document.getElementById(id);
-      const state = { user: null, profile: null, activeConversation: null, activePerson: null, realtime: null, scanner: null, signUpMode: false, toastTimer: null, pc:null, localStream:null, recorder:null, voiceChunks:[], callChannel:null, pendingOffer:null, remoteStream:null, screenStream:null, incomingSignal:null, callVideoMode:false, speakerOn:true, callConversation:null, callPeerId:null, callPeerProfile:null };
+      const state = { user: null, profile: null, activeConversation: null, activePerson: null, realtime: null, scanner: null, signUpMode: false, toastTimer: null, pc:null, localStream:null, recorder:null, voiceChunks:[], callChannel:null, pendingOffer:null, remoteStream:null, screenStream:null, incomingSignal:null, callVideoMode:false, speakerOn:true };
       const PROFILE_FIELDS = 'id,username,display_name,avatar_url,public_code,created_at';
 
       function toast(message) {
@@ -609,119 +587,6 @@
         if (error) toast(error.message); else toast('Password reset email sent.');
       });
 
-      function base64UrlToBytes(value){
-        const pad='='.repeat((4-value.length%4)%4);
-        const b64=(value+pad).replace(/-/g,'+').replace(/_/g,'/');
-        const raw=atob(b64);
-        return Uint8Array.from(raw,c=>c.charCodeAt(0));
-      }
-      async function registerAppServiceWorker(){
-        if(!('serviceWorker' in navigator))return null;
-        try{return await navigator.serviceWorker.register('/sw.js',{scope:'/'});}
-        catch(error){console.warn('Service worker registration failed:',error);return null;}
-      }
-      async function refreshPushStatus(){
-        const button=$('pushNotificationsBtn'),status=$('pushStatus');
-        if(!button||!status)return;
-        if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)){
-          status.textContent='Push notifications are not supported by this browser.';button.disabled=true;return;
-        }
-        const permission=Notification.permission;
-        if(permission==='denied'){status.textContent='Notifications are blocked in browser settings.';button.textContent='Blocked';button.disabled=true;return;}
-        try{
-          const reg=await navigator.serviceWorker.getRegistration('/');
-          const sub=reg?await reg.pushManager.getSubscription():null;
-          status.textContent=sub?'Enabled on this device':(permission==='granted'?'Permission granted — not subscribed':'Not enabled on this device');
-          button.textContent=sub?'Disable':'Enable';button.disabled=false;
-        }catch(_){status.textContent='Not enabled on this device';}
-      }
-      async function enablePushNotifications(){
-        if(!state.user)throw new Error('Sign in before enabling notifications.');
-        if(!PUSH_VAPID_PUBLIC_KEY||PUSH_VAPID_PUBLIC_KEY.includes('PASTE_'))throw new Error('Add the VAPID public key to index.html after generating the VAPID key pair.');
-        if(!window.isSecureContext)throw new Error('Push notifications require HTTPS (or localhost for testing).');
-        const permission=await Notification.requestPermission();
-        if(permission!=='granted')throw new Error('Notification permission was not granted.');
-        const reg=await registerAppServiceWorker();
-        if(!reg)throw new Error('Service worker could not be registered.');
-        const ready=await navigator.serviceWorker.ready;
-        let sub=await ready.pushManager.getSubscription();
-        if(!sub)sub=await ready.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToBytes(PUSH_VAPID_PUBLIC_KEY)});
-        const json=sub.toJSON();
-        const {error}=await db.from('push_subscriptions').upsert({
-          user_id:state.user.id,endpoint:json.endpoint,p256dh:json.keys?.p256dh,auth:json.keys?.auth,
-          device_label:(navigator.userAgent||'Browser').slice(0,180),
-          notify_messages:$('notifyMessages').checked,notify_calls:$('notifyCalls').checked,sound_enabled:$('notifySound').checked
-        },{onConflict:'endpoint'});
-        if(error)throw error;
-        await refreshPushStatus();
-        toast('Push notifications enabled on this device.');
-      }
-      async function disablePushNotifications(){
-        const reg=await navigator.serviceWorker.getRegistration('/');
-        const sub=reg?await reg.pushManager.getSubscription():null;
-        if(sub){
-          const endpoint=sub.endpoint;
-          const {error}=await db.from('push_subscriptions').delete().eq('user_id',state.user.id).eq('endpoint',endpoint);
-          if(error)throw error;
-          await sub.unsubscribe();
-        }
-        await refreshPushStatus();toast('Push notifications disabled on this device.');
-      }
-      async function savePushPreferences(){
-        const reg=await navigator.serviceWorker.getRegistration('/');
-        const sub=reg?await reg.pushManager.getSubscription():null;
-        if(!sub)return;
-        const {error}=await db.from('push_subscriptions').update({
-          notify_messages:$('notifyMessages').checked,notify_calls:$('notifyCalls').checked,sound_enabled:$('notifySound').checked
-        }).eq('user_id',state.user.id).eq('endpoint',sub.endpoint);
-        if(error)throw error;
-      }
-      async function triggerPush(eventType,eventId){
-        try{
-          const {error}=await db.functions.invoke('send-push',{body:{event_type:eventType,event_id:String(eventId)}});
-          if(error)console.warn('Push notification request failed:',error.message||error);
-        }catch(error){console.warn('Push notification request failed:',error);}
-      }
-      async function handleNotificationRoute(){
-        const url=new URL(window.location.href);
-        const signalId=url.searchParams.get('incomingCallSignal');
-        const action=url.searchParams.get('callAction');
-        if(!signalId||!state.user)return;
-        try{
-          const {data:sig,error}=await db.from('call_signals').select('id,conversation_id,sender_id,recipient_id,signal_type,payload,created_at')
-            .eq('id',signalId).eq('recipient_id',state.user.id).eq('signal_type','offer').maybeSingle();
-          if(error)throw error;
-          if(!sig)throw new Error('This incoming call is no longer available.');
-          state.callConversation=sig.conversation_id;state.callPeerId=sig.sender_id;state.incomingSignal=sig;
-          const {data:person}=await db.from('profiles').select(PROFILE_FIELDS).eq('id',sig.sender_id).maybeSingle();
-          state.callPeerProfile=person||{display_name:'Incoming caller'};state.incomingCallerProfile=person||null;
-          if(action==='decline'){
-            await sendSignal('reject',{},sig.sender_id,sig.conversation_id);
-            toast('Call declined from notification.');
-          }else{
-            $('incomingCallName').textContent=person?.display_name||person?.username||'Someone is calling';
-            $('incomingCallAvatar').innerHTML='';
-            if(person?.avatar_url){const img=document.createElement('img');img.src=person.avatar_url;img.alt='Caller photo';$('incomingCallAvatar').appendChild(img);}
-            else $('incomingCallAvatar').textContent=(person?.display_name||person?.username||'FA').slice(0,2).toUpperCase();
-            $('incomingCallType').textContent=sig.payload?.video?'Incoming video call':'Incoming audio call';
-            $('incomingCallOverlay').classList.remove('hidden');
-          }
-        }catch(error){toast(error.message||'Could not open incoming call.');}
-        url.searchParams.delete('incomingCallSignal');url.searchParams.delete('callAction');
-        window.history.replaceState({},document.title,url.pathname+url.search+url.hash);
-      }
-      if('serviceWorker' in navigator)registerAppServiceWorker();
-      if($('pushNotificationsBtn')){
-        $('pushNotificationsBtn').addEventListener('click',async()=>{
-          try{
-            const reg=await navigator.serviceWorker.getRegistration('/');
-            const sub=reg?await reg.pushManager.getSubscription():null;
-            if(sub)await disablePushNotifications();else await enablePushNotifications();
-          }catch(error){toast(error.message||'Could not update notification settings.');}
-        });
-        ['notifyMessages','notifyCalls','notifySound'].forEach(id=>$(id).addEventListener('change',()=>savePushPreferences().catch(e=>toast(e.message))));
-      }
-
       async function boot(user) {
         state.user = user;
         showApp();
@@ -737,10 +602,7 @@
           if (!profile) throw new Error('Your profile is still being prepared. Please sign out and sign in again.');
           state.profile = profile;
           renderOwnProfile();
-          watchCallSignals();
           await loadChats();
-          await refreshPushStatus();
-          await handleNotificationRoute();
           await handleIncomingProfileLink();
         } catch (error) { toast(error.message || 'Could not load your profile.'); }
       }
@@ -845,7 +707,7 @@
 
       async function openConversation(conversationId, person) {
         if (state.realtime) { await db.removeChannel(state.realtime); state.realtime = null; }
-        state.activeConversation = conversationId; state.activePerson = person;
+        state.activeConversation = conversationId; state.activePerson = person; watchCallSignals();
         $('chatEmpty').classList.add('hidden'); $('activeChat').classList.remove('hidden'); $('chatPanel').classList.add('mobile-open'); $('sidebar').classList.add('mobile-hidden');
         setAvatar($('chatAvatar'), person);
         safeText($('chatTitle'), person.display_name || person.username);
@@ -874,17 +736,7 @@
           else if (message.media_type === 'audio' || message.media_type === 'voice') { const a=document.createElement('audio'); a.src=url; a.controls=true; bubble.appendChild(a); }
           else { const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener'; a.textContent=message.file_name||'Download file'; a.style.color='#a8edff'; bubble.appendChild(a); }
           if (message.body) { const caption=document.createElement('div'); caption.textContent=message.body; bubble.appendChild(caption); }
-        } else {
-          const body=message.body||'';
-          const urlPattern=/(https?:\/\/[^\s<>"']+)/gi;
-          let last=0,match;
-          while((match=urlPattern.exec(body))!==null){
-            if(match.index>last)bubble.appendChild(document.createTextNode(body.slice(last,match.index)));
-            const link=document.createElement('a');link.href=match[0];link.target='_blank';link.rel='noopener noreferrer';link.textContent=match[0];link.style.color='#8fdcff';link.style.overflowWrap='anywhere';
-            bubble.appendChild(link);last=urlPattern.lastIndex;
-          }
-          if(last<body.length)bubble.appendChild(document.createTextNode(body.slice(last)));
-        }
+        } else bubble.textContent = message.body || '';
         const time = document.createElement('div'); time.className = 'message-time'; time.textContent = formatTime(message.created_at);
         line.append(bubble, time); area.appendChild(line); area.scrollTop = area.scrollHeight;
       }
@@ -910,7 +762,6 @@
           const { data, error } = await db.from('messages').insert({ conversation_id: state.activeConversation, sender_id: state.user.id, body }).select('id,conversation_id,sender_id,body,created_at').single();
           if (error) throw error;
           appendMessage(data); $('messageInput').value = ''; await loadChats();
-          triggerPush('message',data.id);
         } catch (error) { toast(error.message || 'Message could not be sent.'); }
         finally { $('messageInput').disabled = false; $('messageInput').focus(); }
       });
@@ -927,7 +778,6 @@
         const mediaType=forcedType || (file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':file.type.startsWith('audio/')?'audio':'file');
         const {data,error}=await db.from('messages').insert({conversation_id:state.activeConversation,sender_id:state.user.id,body:'',media_url:path,media_type:mediaType,file_name:file.name,mime_type:file.type,file_size:file.size}).select('id,conversation_id,sender_id,body,media_type,media_url,file_name,mime_type,file_size,created_at').single();
         if(error) throw error; appendMessage(data); await loadChats();
-        triggerPush('message',data.id);
       }
       $('attachBtn').addEventListener('click',()=>$('attachmentInput').click());
       $('attachmentInput').addEventListener('change',async()=>{const f=$('attachmentInput').files[0];if(!f)return;try{await uploadChatFile(f);toast('Attachment sent.');}catch(e){toast(e.message||'Upload failed.');}finally{$('attachmentInput').value='';}});
@@ -956,172 +806,95 @@
       }
       function showCallUI(video){
         state.callVideoMode=!!video;
+        $('callVideos').classList.toggle('audio-mode',!video);
         $('audioAvatarWrap').classList.toggle('hidden',!!video);
         $('remoteCallVideo').classList.toggle('hidden',!video);
         $('localCallVideo').classList.toggle('hidden',!video);
-        const peer=state.callPeerProfile||state.activePerson||{};
-        const avatarNode=$('audioCallAvatar');
-        avatarNode.innerHTML='';
-        if(peer.avatar_url){
-          const im=document.createElement('img');im.src=peer.avatar_url;im.alt='Contact photo';avatarNode.appendChild(im);
-        }else{
-          avatarNode.textContent=(peer.display_name||peer.username||'FA').split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
-        }
+        const peer=state.activePerson||{};
+        const avatarNode=$('audioCallAvatar');avatarNode.innerHTML='';
+        if(peer.avatar_url){const im=document.createElement('img');im.src=peer.avatar_url;im.alt='Contact photo';avatarNode.appendChild(im);}
+        else avatarNode.textContent=(peer.display_name||peer.username||'FA').split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
         $('audioCallName').textContent=peer.display_name||peer.username||'Contact';
         $('callOverlay').classList.remove('hidden');
-        $('callTitle').textContent=(video?'Video call with ':'Audio call with ')+(peer.display_name||peer.username||'Contact');
+        $('callTitle').textContent=(video?'Video call with ':'Audio call with ')+(state.activePerson?.display_name||state.activePerson?.username||'Contact');
         $('callStatus').textContent='Connecting…';
       }
-      async function sendSignal(type,payload={},recipient=state.callPeerId,conversationId=state.callConversation){
-        if(!recipient||!conversationId||!state.user)throw new Error('Call session is not ready. Open a chat and try again.');
-        const {data,error}=await db.from('call_signals').insert({
-          conversation_id:conversationId,
-          sender_id:state.user.id,
-          recipient_id:recipient,
-          signal_type:type,
-          payload
-        }).select('id').single();
+      async function sendSignal(type,payload={},recipient=state.activePerson?.id){
+        if(!recipient||!state.activeConversation)throw new Error('Open a conversation before calling.');
+        const {error}=await db.from('call_signals').insert({conversation_id:state.activeConversation,sender_id:state.user.id,recipient_id:recipient,signal_type:type,payload});
         if(error)throw error;
-        if(type==='offer'&&data?.id)triggerPush('call',data.id);
-        return data;
-      }
-      async function playRemoteAudio(){
-        const audio=$('remoteCallAudio');
-        audio.muted=false;
-        audio.volume=1;
-        try{
-          await audio.play();
-          $('enableSoundBtn').classList.add('hidden');
-        }catch(err){
-          $('enableSoundBtn').classList.remove('hidden');
-          $('callStatus').textContent='Call connected. Tap Enable sound to hear audio.';
-        }
       }
       function setupPeer(){
         state.pc=new RTCPeerConnection(rtcConfig);
         state.remoteStream=new MediaStream();
         $('remoteCallVideo').srcObject=state.remoteStream;
-        $('remoteCallVideo').muted=true;
+        $('remoteCallVideo').muted=true; // Play remote sound only once through the audio element.
         $('remoteCallAudio').srcObject=state.remoteStream;
         $('remoteCallAudio').muted=false;
         $('remoteCallAudio').volume=1;
-        state.pc.ontrack=async e=>{
-          if(e.streams&&e.streams[0]){
-            for(const track of e.streams[0].getTracks()){
-              if(!state.remoteStream.getTracks().some(t=>t.id===track.id))state.remoteStream.addTrack(track);
-            }
-          }else if(!state.remoteStream.getTracks().some(t=>t.id===e.track.id)){
-            state.remoteStream.addTrack(e.track);
-          }
-          if(e.track.kind==='audio')await playRemoteAudio();
-          if(e.track.kind==='video'){
-            $('remoteCallVideo').srcObject=state.remoteStream;
-            $('remoteCallVideo').play().catch(()=>{});
-          }
+        state.pc.ontrack=e=>{
+          const streams=e.streams?.length?e.streams:[];
+          if(streams.length){streams[0].getTracks().forEach(t=>{if(!state.remoteStream.getTracks().some(x=>x.id===t.id))state.remoteStream.addTrack(t);});}
+          else if(!state.remoteStream.getTracks().some(x=>x.id===e.track.id))state.remoteStream.addTrack(e.track);
           $('callStatus').textContent='Connected';
+          $('remoteCallVideo').play().catch(()=>{});$('remoteCallAudio').play().catch(()=>{});
         };
+        // Use non-trickle ICE below: wait for gathering to finish, then send
+        // the complete SDP so candidates cannot arrive before the offer/answer.
         state.pc.onconnectionstatechange=()=>{
           const c=state.pc?.connectionState;
           if(c==='connected')$('callStatus').textContent='Connected';
-          if(c==='failed')$('callStatus').textContent='Connection failed. Your network may need TURN relay credentials.';
-          if(c==='disconnected')$('callStatus').textContent='Connection interrupted…';
-          if(c==='closed')$('callStatus').textContent='Call ended';
-        };
-        state.pc.oniceconnectionstatechange=()=>{
-          const c=state.pc?.iceConnectionState;
-          if(c==='checking')$('callStatus').textContent='Connecting to the other phone…';
-          if(c==='failed')$('callStatus').textContent='Could not establish a network route. TURN is required on some networks.';
+          if(c==='failed')$('callStatus').textContent='Network connection failed. TURN server is required on some networks.';
+          if(c==='disconnected')$('callStatus').textContent='Reconnecting…';
         };
       }
       async function getCallStream(video){
         if(!navigator.mediaDevices?.getUserMedia)throw new Error('Calls need HTTPS and browser microphone/camera permissions.');
-        return navigator.mediaDevices.getUserMedia({
-          audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},
-          video:video?{facingMode:'user',width:{ideal:640},height:{ideal:480},frameRate:{ideal:24,max:30}}:false
-        });
+        return navigator.mediaDevices.getUserMedia({audio:true,video:!!video});
       }
       async function startCall(video){
         if(state.pc){toast('A call is already active.');return;}
-        if(!state.activeConversation||!state.activePerson){toast('Open the person’s chat before calling.');return;}
-        state.callConversation=state.activeConversation;
-        state.callPeerId=state.activePerson.id;
-        state.callPeerProfile=state.activePerson;
         try{
           state.localStream=await getCallStream(video);
-          showCallUI(video);
-          $('localCallVideo').srcObject=state.localStream;
-          $('localCallVideo').muted=true;
-          $('localCallVideo').play().catch(()=>{});
-          setupPeer();
-          state.localStream.getTracks().forEach(t=>state.pc.addTrack(t,state.localStream));
-          const offer=await state.pc.createOffer();
-          await state.pc.setLocalDescription(offer);
+          showCallUI(video);$('localCallVideo').srcObject=state.localStream;
+          setupPeer();state.localStream.getTracks().forEach(t=>state.pc.addTrack(t,state.localStream));
+          const offer=await state.pc.createOffer();await state.pc.setLocalDescription(offer);
           $('callStatus').textContent='Preparing secure connection…';
-          await waitForIceGathering(state.pc,15000);
+          await waitForIceGathering(state.pc);
           await sendSignal('offer',{sdp:state.pc.localDescription,video:!!video});
-          $('callStatus').textContent='Ringing… waiting for answer';
-        }catch(e){
-          await cleanupCall(false);
-          toast(e.message||'Could not start call. Check microphone/camera permission and HTTPS.');
-        }
+          $('callStatus').textContent='Calling… waiting for answer';
+        }catch(e){await cleanupCall(false);toast(e.message||'Could not start call.');}
       }
       async function cleanupCall(sendHangup=true){
-        const peerId=state.callPeerId,conversationId=state.callConversation;
-        if(sendHangup&&peerId&&conversationId)sendSignal('hangup',{},peerId,conversationId).catch(()=>{});
+        if(sendHangup&&state.activePerson)sendSignal('hangup',{}).catch(()=>{});
         if(state.screenStream)state.screenStream.getTracks().forEach(t=>t.stop());
         state.screenStream=null;
-        if(state.pc){
-          state.pc.ontrack=null;
-          state.pc.onconnectionstatechange=null;
-          state.pc.oniceconnectionstatechange=null;
-          state.pc.close();
-        }
+        if(state.pc){state.pc.ontrack=null;state.pc.onicecandidate=null;state.pc.close();}
         state.pc=null;
         if(state.localStream)state.localStream.getTracks().forEach(t=>t.stop());
         state.localStream=null;state.remoteStream=null;
-        $('localCallVideo').srcObject=null;
-        $('remoteCallVideo').srcObject=null;
-        $('remoteCallAudio').srcObject=null;
-        $('callOverlay').classList.add('hidden');
-        $('incomingCallOverlay').classList.add('hidden');
-        $('enableSoundBtn').classList.add('hidden');
-        $('muteCallBtn').classList.remove('active');
-        $('speakerCallBtn').classList.remove('active');
-        $('cameraCallBtn').classList.remove('active');
-        $('screenCallBtn').classList.remove('active');
-        $('muteCallBtn').textContent='🎙 Mute';
-        $('speakerCallBtn').textContent='🔊 Speaker';
-        $('cameraCallBtn').textContent='📷 Camera off';
-        $('screenCallBtn').textContent='▣ Share screen';
+        $('localCallVideo').srcObject=null;$('remoteCallVideo').srcObject=null;$('remoteCallAudio').srcObject=null;
+        $('callOverlay').classList.add('hidden');$('incomingCallOverlay').classList.add('hidden');
+        $('muteCallBtn').classList.remove('active');$('speakerCallBtn').classList.remove('active');
+        $('cameraCallBtn').classList.remove('active');$('screenCallBtn').classList.remove('active');
+        $('muteCallBtn').textContent='🎙 Mute';$('speakerCallBtn').textContent='🔊 Speaker';$('cameraCallBtn').textContent='📷 Camera off';$('screenCallBtn').textContent='▣ Share screen';
         state.pendingOffer=null;state.incomingSignal=null;
-        state.callConversation=null;state.callPeerId=null;state.callPeerProfile=null;state.incomingCallerProfile=null;
       }
       async function acceptIncomingCall(){
         const sig=state.incomingSignal;if(!sig)return;
         try{
           $('incomingCallOverlay').classList.add('hidden');
-          state.callConversation=sig.conversation_id;
-          state.callPeerId=sig.sender_id;
-          state.callPeerProfile=state.incomingCallerProfile||null;
           const video=!!sig.payload?.video;
-          state.localStream=await getCallStream(video);
-          showCallUI(video);
-          $('localCallVideo').srcObject=state.localStream;
-          $('localCallVideo').muted=true;
-          $('localCallVideo').play().catch(()=>{});
-          setupPeer();
+          state.localStream=await getCallStream(video);showCallUI(video);
+          $('localCallVideo').srcObject=state.localStream;setupPeer();
           state.localStream.getTracks().forEach(t=>state.pc.addTrack(t,state.localStream));
           await state.pc.setRemoteDescription(sig.payload.sdp);
-          const answer=await state.pc.createAnswer();
-          await state.pc.setLocalDescription(answer);
+          const answer=await state.pc.createAnswer();await state.pc.setLocalDescription(answer);
           $('callStatus').textContent='Preparing secure connection…';
-          await waitForIceGathering(state.pc,15000);
-          await sendSignal('answer',{sdp:state.pc.localDescription},sig.sender_id,sig.conversation_id);
+          await waitForIceGathering(state.pc);
+          await sendSignal('answer',{sdp:state.pc.localDescription},sig.sender_id);
           $('callStatus').textContent='Connecting…';
-        }catch(e){
-          await cleanupCall(false);
-          toast(e.message||'Could not accept call. Check microphone/camera permissions.');
-        }
+        }catch(e){await cleanupCall(false);toast(e.message||'Could not accept call.');}
       }
       async function toggleScreenShare(){
         if(!state.pc||!state.callVideoMode){toast('Screen sharing is available during a video call.');return;}
@@ -1146,7 +919,6 @@
       $('audioCallBtn').addEventListener('click',()=>startCall(false));
       $('videoCallBtn').addEventListener('click',()=>startCall(true));
       $('hangupBtn').addEventListener('click',()=>cleanupCall(true));
-      $('enableSoundBtn').addEventListener('click',()=>playRemoteAudio());
       $('muteCallBtn').addEventListener('click',()=>{
         if(!state.localStream)return;
         const tracks=state.localStream.getAudioTracks(),muted=tracks.every(t=>!t.enabled);
@@ -1167,51 +939,30 @@
         $('incomingCallOverlay').classList.add('hidden');state.incomingSignal=null;
       });
       function watchCallSignals(){
-        if(!state.user)return;
         if(state.callChannel)db.removeChannel(state.callChannel);
-        state.callChannel=db.channel('calls-user-'+state.user.id)
-          .on('postgres_changes',{
-            event:'INSERT',schema:'public',table:'call_signals',
-            filter:`recipient_id=eq.${state.user.id}`
-          },async({new:sig})=>{
-            if(!sig||sig.sender_id===state.user.id)return;
+        state.callChannel=db.channel('calls-'+state.user.id+'-'+state.activeConversation)
+          .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_signals',filter:`recipient_id=eq.${state.user.id}`},async({new:sig})=>{
+            if(sig.conversation_id!==state.activeConversation)return;
             try{
               if(sig.signal_type==='offer'){
-                if(state.pc||state.incomingSignal){
-                  // Do not replace an active call or a pending incoming prompt.
-                  return;
-                }
+                if(state.pc||state.incomingSignal)return;
                 state.incomingSignal=sig;
-                state.callConversation=sig.conversation_id;
-                state.callPeerId=sig.sender_id;
-                const {data:caller}=await db.from('profiles').select(PROFILE_FIELDS).eq('id',sig.sender_id).maybeSingle();
-                state.incomingCallerProfile=caller||null;
-                state.callPeerProfile=caller||{display_name:'Incoming caller'};
-                $('incomingCallName').textContent=caller?.display_name||caller?.username||'Someone is calling';
+                $('incomingCallName').textContent=state.activePerson?.display_name||state.activePerson?.username||'Someone';
                 $('incomingCallAvatar').innerHTML='';
-                if(caller?.avatar_url){
-                  const av=document.createElement('img');av.src=caller.avatar_url;av.alt='Caller photo';$('incomingCallAvatar').appendChild(av);
-                }else{
-                  $('incomingCallAvatar').textContent=(caller?.display_name||caller?.username||'FA').slice(0,2).toUpperCase();
-                }
+                if(state.activePerson?.avatar_url){const av=document.createElement('img');av.src=state.activePerson.avatar_url;av.alt='Caller photo';$('incomingCallAvatar').appendChild(av);}
+                else $('incomingCallAvatar').textContent=(state.activePerson?.display_name||state.activePerson?.username||'FA').slice(0,2).toUpperCase();
                 $('incomingCallType').textContent=sig.payload?.video?'Incoming video call':'Incoming audio call';
                 $('incomingCallOverlay').classList.remove('hidden');
                 if(navigator.vibrate)navigator.vibrate([400,200,400,200,700]);
-              }else if(sig.signal_type==='answer'&&state.pc&&sig.conversation_id===state.callConversation&&sig.sender_id===state.callPeerId){
-                await state.pc.setRemoteDescription(sig.payload.sdp);
-                $('callStatus').textContent='Ringing… connecting';
-              }else if(['hangup','reject'].includes(sig.signal_type)&&sig.conversation_id===state.callConversation&&sig.sender_id===state.callPeerId){
-                await cleanupCall(false);
-                toast(sig.signal_type==='reject'?'Call declined.':'Call ended.');
+              }else if(sig.signal_type==='answer'&&state.pc){
+                await state.pc.setRemoteDescription(sig.payload.sdp);$('callStatus').textContent='Connecting…';
+              }else if(sig.signal_type==='ice'&&state.pc&&sig.payload?.candidate){
+                try{await state.pc.addIceCandidate(sig.payload.candidate);}catch(e){console.warn('ICE candidate skipped',e);}
+              }else if(['hangup','reject'].includes(sig.signal_type)){
+                await cleanupCall(false);toast(sig.signal_type==='reject'?'Call declined.':'Call ended.');
               }
-            }catch(e){
-              console.error('Call signaling error:',e);
-              toast(e.message||'Call connection failed. Please try again.');
-            }
-          })
-          .subscribe((status)=>{
-            if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.error('Call realtime channel status:',status);
-          });
+            }catch(e){toast(e.message||'Call connection failed.');}
+          }).subscribe();
       }
 
       $('findUserBtn').addEventListener('click', async () => { try { await findUser($('userSearch').value); } catch (error) { toast(error.message); } });
