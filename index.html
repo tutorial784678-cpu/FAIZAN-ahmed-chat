@@ -169,6 +169,9 @@
     .profile-actions button { width:100%; font-size:.75rem; min-height:39px; }
     .panel-divider { width:100%; height:1px; background:rgba(255,255,255,.09); margin:16px 0 12px; }
     .privacy-note { color:#8097bf; font-size:.65rem; line-height:1.5; margin-top:auto; padding-top:18px; }
+    #connectionConsentModal{z-index:10001;pointer-events:auto}
+    #connectionConsentModal .modal{pointer-events:auto}
+    #connectionConsentModal button{position:relative;z-index:10003;pointer-events:auto;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:rgba(80,150,255,.25)}
     .modal-backdrop { position:fixed; inset:0; z-index:10; display:grid; place-items:center; padding:18px; background:rgba(2,8,28,.72); backdrop-filter:blur(12px); }
     .modal { width:min(500px,100%); max-height:min(88vh,760px); overflow:auto; padding:23px; border-radius:23px; }
     .modal-head { display:flex; justify-content:space-between; align-items:center; gap:15px; }
@@ -515,7 +518,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script>
+  <script type="module">
     (() => {
       'use strict';
       // Public/publishable client key only. Never put a Supabase service-role key in this file.
@@ -815,31 +818,90 @@
 
       const networkConsentKey=()=> 'fa-network-security-consent-v1:'+state.user.id;
       const networkAccessSessionKey=()=> 'fa-network-access-recorded:'+state.user.id;
-      async function recordAccessIfConsented(){
+      async function recordAccessIfConsented(force=false){
+        if(!state.user||localStorage.getItem(networkConsentKey())!=='yes')return {ok:false,reason:'Consent not saved'};
         try{
-          if(localStorage.getItem(networkConsentKey())!=='yes')return;
-          if(sessionStorage.getItem(networkAccessSessionKey())==='yes')return;
-          sessionStorage.setItem(networkAccessSessionKey(),'yes');
-          const {error}=await db.functions.invoke('admin-console',{body:{action:'record-access',consent:true,consent_version:'fa-network-v1'}});
-          if(error)console.warn('Network security log was not recorded:',error.message||error);
-        }catch(error){console.warn('Could not record consented network access:',error);}
+          if(!force && sessionStorage.getItem(networkAccessSessionKey())==='yes')return {ok:true,alreadyRecorded:true};
+        }catch(_){}
+        // Do not mark the attempt as complete until the server responds. This lets a failed request retry.
+        const request=db.functions.invoke('admin-console',{body:{action:'record-access',consent:true,consent_version:'fa-network-v1'}});
+        const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('The security log request timed out. Check your connection and try again.')),12000));
+        const {data,error}=await Promise.race([request,timeout]);
+        if(error)throw error;
+        try{sessionStorage.setItem(networkAccessSessionKey(),'yes');}catch(_){}
+        return data||{ok:true};
       }
       function askForNetworkConsent(){
         try{
           if(localStorage.getItem(networkConsentKey())===null)$('connectionConsentModal').classList.remove('hidden');
-          else recordAccessIfConsented();
+          else if(localStorage.getItem(networkConsentKey())==='yes')recordAccessIfConsented().catch(error=>console.warn('Network security log was not recorded:',error));
         }catch(_){/* Storage may be disabled; do not collect without a saved consent. */}
       }
-      $('connectionConsentAllow').addEventListener('click',async()=>{
-        try{localStorage.setItem(networkConsentKey(),'yes');}catch(_){toast('Browser storage is unavailable; network logging was not enabled.');$('connectionConsentModal').classList.add('hidden');return;}
-        $('connectionConsentModal').classList.add('hidden');
-        await recordAccessIfConsented();
-        toast('Optional network security logging enabled on this device.');
-      });
-      $('connectionConsentDecline').addEventListener('click',()=>{
-        try{localStorage.setItem(networkConsentKey(),'no');}catch(_){}
-        $('connectionConsentModal').classList.add('hidden');
-      });
+      // Bind directly to the real buttons after the module has parsed the complete page.
+      // This avoids relying on event delegation for a modal appended after the app script.
+      function bindNetworkConsentButtons(){
+        const modal=$('connectionConsentModal');
+        const allow=$('connectionConsentAllow');
+        const decline=$('connectionConsentDecline');
+        if(!modal||!allow||!decline){
+          console.error('Network consent controls are missing from the page.');
+          return;
+        }
+        if(allow.dataset.handlerBound==='yes')return;
+        allow.dataset.handlerBound='yes';
+        decline.dataset.handlerBound='yes';
+
+        allow.addEventListener('click',async(event)=>{
+          event.preventDefault();
+          event.stopPropagation();
+          if(allow.disabled)return;
+          if(!state.user?.id){
+            toast('Please sign in first, then choose Allow security logging.');
+            return;
+          }
+          allow.disabled=true;
+          const oldText=allow.textContent;
+          allow.textContent='Saving choice…';
+          allow.setAttribute('aria-busy','true');
+          try{
+            // Save the user's choice first. The site remains usable if the log endpoint is offline.
+            localStorage.setItem(networkConsentKey(),'yes');
+            modal.classList.add('hidden');
+            toast('Your choice is saved. Recording the security log…');
+            try{
+              const result=await recordAccessIfConsented(true);
+              if(result?.recorded===true)toast('Security logging is enabled on this device.');
+              else if(result?.recorded===false)toast('Your choice is saved, but this connection did not provide a public IP address.');
+              else toast('Your privacy choice is saved.');
+            }catch(serverError){
+              console.warn('Consented network log could not be recorded:',serverError);
+              toast('Your choice is saved. The security log could not be recorded right now; it will retry on your next visit.');
+            }
+          }catch(storageError){
+            console.error('Could not save network consent:',storageError);
+            toast('Browser storage is blocked. Please allow site storage and try again.');
+          }finally{
+            allow.disabled=false;
+            allow.removeAttribute('aria-busy');
+            allow.textContent=oldText;
+          }
+        },{passive:false});
+
+        decline.addEventListener('click',(event)=>{
+          event.preventDefault();
+          event.stopPropagation();
+          try{localStorage.setItem(networkConsentKey(),'no');}
+          catch(error){console.warn('Could not save declined consent:',error);}
+          modal.classList.add('hidden');
+          toast('No problem. Network security logging remains off.');
+        },{passive:false});
+      }
+      if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded',bindNetworkConsentButtons,{once:true});
+      }else{
+        bindNetworkConsentButtons();
+      }
+
       $('reportChatBtn').addEventListener('click',()=>{
         if(!state.activeConversation){toast('Open a conversation first.');return;}
         $('reportDetails').value='';$('reportChatModal').classList.remove('hidden');
@@ -1587,7 +1649,7 @@
       <div class="modal-head"><h3 id="connectionConsentTitle">Privacy choice: network security logs</h3></div>
       <p class="privacy-choice-copy">You can optionally allow Faizan Ahmed Chats to save your public network IP address and browser type when you use this device. This helps the service investigate spam and account abuse. An authorized admin may see this information and may request an approximate city/country estimate from the IP address. IP location is not GPS and can be inaccurate. You can continue using chats without sharing this data.</p>
       <div class="privacy-choice-actions">
-        <button id="connectionConsentAllow" class="primary-btn" type="button">Allow security logging</button>
+        <button id="connectionConsentAllow" class="primary-btn" type="button" aria-label="Allow optional network security logging">Allow security logging</button>
         <button id="connectionConsentDecline" class="quiet-btn" type="button">Not now</button>
       </div>
     </div>
