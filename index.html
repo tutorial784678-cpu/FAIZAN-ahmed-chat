@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#07163f" />
+  <meta name="theme-color" content="#101d32" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="description" content="Faizan Ahmed Chats — a private, real-time messaging space with unique chat IDs, QR contact sharing and profile photos." />
   <title>Faizan Ahmed Chats</title>
   <style>
@@ -272,6 +276,18 @@
     .settings-divider{height:1px;background:#ffffff16;margin:19px 0}.settings-signout{width:100%;color:#ff9eaa}
     @media(max-width:520px){.app-view{padding:9px}.app-shell{gap:9px}.topbar{padding:9px 11px;min-height:58px}.topbar .online-pill{display:none}.top-actions{gap:5px}.top-actions .secondary-btn{padding:8px 10px}.call-controls{gap:7px;padding-left:9px;padding-right:9px}.call-controls button{font-size:.73rem;min-width:56px;padding:9px 8px}.call-controls button.danger{min-width:80px}}
 
+
+    .push-settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#ffffff08}
+    .push-check{display:flex!important;align-items:center;gap:9px;font-size:.88rem!important}
+    .push-check input{width:18px;height:18px;accent-color:#3987f6}
+    .notification-prompt{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 16px;border:1px solid rgba(91,190,246,.35);border-radius:18px;background:linear-gradient(105deg,rgba(38,129,225,.19),rgba(121,81,221,.18));box-shadow:0 12px 32px #0002}
+    .notification-prompt.hidden{display:none!important}.notification-prompt-copy{min-width:0}.notification-prompt-copy strong{display:block;font-size:.9rem}.notification-prompt-copy p{margin:4px 0 0;color:#b8c9e4;font-size:.76rem;line-height:1.45}
+    .notification-prompt-actions{display:flex;gap:8px;flex:0 0 auto}.notification-prompt-actions button{min-height:39px;padding:0 13px;font-size:.76rem}
+    .privacy-choice-copy{font-size:.83rem;color:#b8c9e4;line-height:1.65}.privacy-choice-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.privacy-choice-actions button{flex:1;min-width:140px}
+    .report-modal textarea{width:100%;min-height:100px;resize:vertical;border:1px solid var(--line);border-radius:13px;padding:12px;background:#0e1929;color:white;font:inherit}
+    .report-modal select{width:100%;border:1px solid var(--line);border-radius:13px;padding:12px;background:#0e1929;color:white;font:inherit}
+    @media(max-width:650px){.notification-prompt{align-items:flex-start;flex-direction:column}.notification-prompt-actions{width:100%}.notification-prompt-actions button{flex:1}}
+
   </style>
 </head>
 <body>
@@ -306,7 +322,7 @@
           <button id="authSubmit" class="primary-btn" type="submit" style="width:100%;margin-top:8px;min-height:48px">Sign in</button>
         </form>
         <button id="forgotPassword" type="button" class="quiet-btn" style="margin-top:10px;border:0;background:transparent;color:#9dc7f0;text-align:left;padding-left:0">Forgot password?</button>
-        <div class="form-note">Create an account or sign in directly with your email and password. Your chat messages are saved to the connected database.</div>
+        <div class="form-note">Create an account or sign in with your email and password. Messages are private; a conversation can be reviewed by authorized moderators only after a user reports it. Optional network-security logging requires your consent.</div>
       </div>
     </div>
   </section>
@@ -322,10 +338,21 @@
           <div class="online-pill"><span class="online-dot"></span> Connected</div>
           <button id="scanTopBtn" class="icon-btn" type="button" title="Scan a QR code" aria-label="Scan QR">▦</button>
           <button id="myQrBtn" class="secondary-btn" type="button">My QR</button>
+          <a id="adminPanelBtn" class="quiet-btn hidden" href="/admin.html" style="text-decoration:none;display:inline-flex;align-items:center">Admin</a>
           <button id="settingsBtn" class="icon-btn" type="button" title="Settings" aria-label="Settings">⚙</button>
           <button id="signOutBtn" class="quiet-btn" type="button">Sign out</button>
         </div>
       </header>
+      <section id="notificationPrompt" class="notification-prompt hidden" role="region" aria-live="polite" aria-label="Notification setup">
+        <div class="notification-prompt-copy">
+          <strong id="notificationPromptTitle">Stay updated on messages and calls</strong>
+          <p id="notificationPromptText">Enable alerts on this device so you can see new messages and incoming calls while Faizan Ahmed Chats is in the background.</p>
+        </div>
+        <div class="notification-prompt-actions">
+          <button id="notificationPromptEnable" class="primary-btn" type="button">Enable notifications</button>
+          <button id="notificationPromptLater" class="quiet-btn" type="button">Later</button>
+        </div>
+      </section>
       <main class="main-grid">
         <aside id="sidebar" class="sidebar glass">
           <div class="me-card">
@@ -333,8 +360,8 @@
             <div class="me-meta"><strong id="myDisplayName">Loading profile…</strong><span id="myPublicCode">FA-000000</span></div>
             <button id="editProfileBtn" class="icon-btn" type="button" title="Change profile photo">✎</button>
           </div>
-          <div class="section-row"><strong>Find people</strong><span>By ID or username</span></div>
-          <div class="search-box"><span class="search-icon">⌕</span><input id="userSearch" placeholder="Username or FA-123456" autocomplete="off" /></div>
+          <div class="section-row"><strong>Find people</strong><span>By Chat ID, username, or name</span></div>
+          <div class="search-box"><span class="search-icon">⌕</span><input id="userSearch" placeholder="Name, username, or FA-123456" autocomplete="off" /></div>
           <div class="find-row"><button id="findUserBtn" class="primary-btn" type="button">Find user</button><button id="scanBtn" class="secondary-btn" type="button">Scan QR</button></div>
           <div id="searchResults" class="result-list"></div>
           <div class="section-row"><strong>Your chats</strong><span id="chatCount">0 conversations</span></div>
@@ -358,6 +385,7 @@
               <div class="chat-tools">
                 <button id="audioCallBtn" class="icon-btn" type="button" title="Audio call">☎</button>
                 <button id="videoCallBtn" class="icon-btn" type="button" title="Video call">▣</button>
+                <button id="reportChatBtn" class="icon-btn" type="button" title="Report this conversation" aria-label="Report conversation">⚑</button>
                 <button id="chatRefreshBtn" class="icon-btn" type="button" title="Refresh messages">↻</button>
               </div>
             </header>
@@ -371,7 +399,7 @@
               <input id="messageInput" maxlength="5000" placeholder="Write a message…" autocomplete="off" aria-label="Message" />
               <button class="send-btn" type="submit" title="Send message" aria-label="Send">➤</button>
             </form>
-            <input id="attachmentInput" class="hidden" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.xlsx,.pptx" />
+            <input id="attachmentInput" class="hidden" type="file"  />
             <div id="callOverlay" class="call-overlay hidden" role="dialog" aria-modal="true" aria-label="Call controls">
               <div class="call-card">
                 <div class="call-title" id="callTitle">Faizan Ahmed Chats</div>
@@ -446,6 +474,16 @@
         <label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Repeat new password" required />
         <button class="primary-btn" type="submit">Update password</button>
       </form>
+
+      <div class="settings-divider"></div>
+      <section class="settings-form" aria-label="Notification settings">
+        <h4>Notifications</h4>
+        <p class="privacy-note" style="margin:0">Enable browser notifications so messages and incoming calls can reach this device while the website is in the background.</p>
+        <div class="push-settings-row"><div><strong>Push notifications</strong><div id="pushStatus" class="muted">Not enabled on this device</div></div><button id="pushNotificationsBtn" class="secondary-btn" type="button">Enable</button></div>
+        <label class="push-check"><input id="notifyMessages" type="checkbox" checked /> Message alerts</label>
+        <label class="push-check"><input id="notifyCalls" type="checkbox" checked /> Incoming call alerts</label>
+        <label class="push-check"><input id="notifySound" type="checkbox" checked /> Use device notification sound</label>
+      </section>
       <div class="settings-divider"></div>
       <button id="settingsSignOutBtn" class="quiet-btn settings-signout" type="button">Sign out of this account</button>
       <p class="privacy-note">Your password is securely managed by Supabase Authentication. Never share it with anyone.</p>
@@ -483,13 +521,15 @@
       // Public/publishable client key only. Never put a Supabase service-role key in this file.
       const SUPABASE_URL = 'https://drpqwvnjdzalhcvfrocg.supabase.co';
       const SUPABASE_KEY = 'sb_publishable_mb48qg4kM05FL1skATwoWg_2u2TCbmA';
+      // Paste the VAPID PUBLIC key generated during setup. Never put the private key here.
+      const PUSH_VAPID_PUBLIC_KEY = 'BME2rwglhb8KKyjjdrfQSwHDYtAcLIPzALf3hriugSZz2_6w5vP93jz3TIQufRWRJDGv-BARCclrSEKrocFYQZ4';
       const { createClient } = window.supabase;
       const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
       });
 
       const $ = (id) => document.getElementById(id);
-      const state = { user: null, profile: null, activeConversation: null, activePerson: null, realtime: null, scanner: null, signUpMode: false, toastTimer: null, pc:null, localStream:null, recorder:null, voiceChunks:[], callChannel:null, pendingOffer:null, remoteStream:null, screenStream:null, incomingSignal:null, callVideoMode:false, speakerOn:true, callConversation:null, callPeerId:null, callPeerProfile:null };
+      const state = { user: null, profile: null, activeConversation: null, activePerson: null, realtime: null, scanner: null, signUpMode: false, toastTimer: null, pc:null, localStream:null, recorder:null, voiceChunks:[], callChannel:null, pendingOffer:null, remoteStream:null, screenStream:null, incomingSignal:null, callVideoMode:false, speakerOn:true, callConversation:null, callPeerId:null, callPeerProfile:null, notificationPromptDismissed:false };
       const PROFILE_FIELDS = 'id,username,display_name,avatar_url,public_code,created_at';
 
       function toast(message) {
@@ -588,25 +628,261 @@
         if (error) toast(error.message); else toast('Password reset email sent.');
       });
 
+      function base64UrlToBytes(value){
+        const pad='='.repeat((4-value.length%4)%4);
+        const b64=(value+pad).replace(/-/g,'+').replace(/_/g,'/');
+        const raw=atob(b64);
+        return Uint8Array.from(raw,c=>c.charCodeAt(0));
+      }
+      async function registerAppServiceWorker(){
+        if(!('serviceWorker' in navigator))return null;
+        try{return await navigator.serviceWorker.register('/sw.js',{scope:'/'});}
+        catch(error){console.warn('Service worker registration failed:',error);return null;}
+      }
+      function setNotificationPrompt(visible,title,message,buttonText='Enable notifications',buttonDisabled=false){
+        const panel=$('notificationPrompt');
+        if(!panel)return;
+        if(!visible||state.notificationPromptDismissed){panel.classList.add('hidden');return;}
+        $('notificationPromptTitle').textContent=title;
+        $('notificationPromptText').textContent=message;
+        $('notificationPromptEnable').textContent=buttonText;
+        $('notificationPromptEnable').disabled=buttonDisabled;
+        panel.classList.remove('hidden');
+      }
+      async function refreshPushStatus(){
+        const button=$('pushNotificationsBtn'),status=$('pushStatus');
+        if(!button||!status)return;
+        if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)){
+          status.textContent='Push notifications are not supported by this browser.';
+          button.textContent='Unavailable';button.disabled=true;
+          setNotificationPrompt(false);
+          return;
+        }
+        const permission=Notification.permission;
+        if(permission==='denied'){
+          status.textContent='Blocked in browser settings. Allow notifications for this site to use alerts.';
+          button.textContent='Blocked';button.disabled=true;
+          setNotificationPrompt(true,'Notifications are blocked for this site','Open the site controls beside the address bar, change Notifications to Allow, then reload this page. The browser will not show another permission popup until you change that setting.','How to unblock',false);
+          return;
+        }
+        try{
+          await registerAppServiceWorker();
+          const reg=await navigator.serviceWorker.getRegistration('/');
+          let sub=reg?await reg.pushManager.getSubscription():null;
+          if(sub){
+            const assignedKey=sub.options?.applicationServerKey;
+            if(assignedKey){
+              const oldBytes=new Uint8Array(assignedKey),newBytes=base64UrlToBytes(PUSH_VAPID_PUBLIC_KEY);
+              const sameKey=oldBytes.length===newBytes.length&&oldBytes.every((value,index)=>value===newBytes[index]);
+              if(!sameKey){
+                const {error:deleteError}=await db.from('push_subscriptions').delete().eq('user_id',state.user.id).eq('endpoint',sub.endpoint);
+                if(deleteError)throw deleteError;
+                await sub.unsubscribe();sub=null;
+              }
+            }
+          }
+          if(sub){
+            const json=sub.toJSON();
+            const {error:saveError}=await db.from('push_subscriptions').upsert({
+              user_id:state.user.id,endpoint:json.endpoint,p256dh:json.keys?.p256dh,auth:json.keys?.auth,
+              device_label:(navigator.userAgent||'Browser').slice(0,180),
+              notify_messages:$('notifyMessages').checked,notify_calls:$('notifyCalls').checked,sound_enabled:$('notifySound').checked
+            },{onConflict:'endpoint'});
+            if(saveError)throw saveError;
+            status.textContent='Enabled on this device';button.textContent='Disable';button.disabled=false;
+            setNotificationPrompt(false);
+          }else{
+            status.textContent=permission==='granted'?'Permission granted — finish device registration':'Not enabled on this device';
+            button.textContent='Enable';button.disabled=false;
+            setNotificationPrompt(true,'Stay updated on messages and calls','Enable alerts on this device so you can see new messages and incoming calls while Faizan Ahmed Chats is in the background.','Enable notifications',false);
+          }
+        }catch(error){
+          status.textContent='Could not prepare push notifications: '+(error?.message||'service worker error');
+          button.textContent='Retry';button.disabled=false;
+          setNotificationPrompt(true,'Finish notification setup','This browser could not prepare its notification worker. Reload the page and try again.','Retry setup',false);
+        }
+      }
+      async function enablePushNotifications(){
+        if(!state.user)throw new Error('Sign in before enabling notifications.');
+        if(!PUSH_VAPID_PUBLIC_KEY||PUSH_VAPID_PUBLIC_KEY.includes('PASTE_'))throw new Error('Add the VAPID public key to index.html after generating the VAPID key pair.');
+        if(!window.isSecureContext)throw new Error('Push notifications require HTTPS (or localhost for testing).');
+        if(Notification.permission==='denied')throw new Error('Notifications are blocked for this site. Open the site controls beside the address bar, set Notifications to Allow, and reload.');
+        const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+        if(permission!=='granted'){
+          await refreshPushStatus();
+          throw new Error('Notification permission was not granted. You can enable it later in the browser site settings.');
+        }
+        const reg=await registerAppServiceWorker();
+        if(!reg)throw new Error('Service worker could not be registered.');
+        const ready=await navigator.serviceWorker.ready;
+        let sub=await ready.pushManager.getSubscription();
+        if(!sub){
+          try{sub=await ready.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToBytes(PUSH_VAPID_PUBLIC_KEY)});}
+          catch(error){throw new Error('The browser could not create a push subscription: '+(error?.message||'unknown error')+'. Check that the deployed VAPID public key matches the server key.');}
+        }
+        const json=sub.toJSON();
+        const {error}=await db.from('push_subscriptions').upsert({
+          user_id:state.user.id,endpoint:json.endpoint,p256dh:json.keys?.p256dh,auth:json.keys?.auth,
+          device_label:(navigator.userAgent||'Browser').slice(0,180),
+          notify_messages:$('notifyMessages').checked,notify_calls:$('notifyCalls').checked,sound_enabled:$('notifySound').checked
+        },{onConflict:'endpoint'});
+        if(error)throw error;
+        await refreshPushStatus();
+        toast('Push notifications enabled on this device.');
+      }
+      async function disablePushNotifications(){
+        const reg=await navigator.serviceWorker.getRegistration('/');
+        const sub=reg?await reg.pushManager.getSubscription():null;
+        if(sub){
+          const endpoint=sub.endpoint;
+          const {error}=await db.from('push_subscriptions').delete().eq('user_id',state.user.id).eq('endpoint',endpoint);
+          if(error)throw error;
+          await sub.unsubscribe();
+        }
+        await refreshPushStatus();toast('Push notifications disabled on this device.');
+      }
+      async function savePushPreferences(){
+        const reg=await navigator.serviceWorker.getRegistration('/');
+        const sub=reg?await reg.pushManager.getSubscription():null;
+        if(!sub)return;
+        const {error}=await db.from('push_subscriptions').update({
+          notify_messages:$('notifyMessages').checked,notify_calls:$('notifyCalls').checked,sound_enabled:$('notifySound').checked
+        }).eq('user_id',state.user.id).eq('endpoint',sub.endpoint);
+        if(error)throw error;
+      }
+      async function triggerPush(eventType,eventId){
+        try{
+          const {error}=await db.functions.invoke('send-push',{body:{event_type:eventType,event_id:String(eventId)}});
+          if(error)console.warn('Push notification request failed:',error.message||error);
+        }catch(error){console.warn('Push notification request failed:',error);}
+      }
+      async function handleNotificationRoute(){
+        const url=new URL(window.location.href);
+        const signalId=url.searchParams.get('incomingCallSignal');
+        const action=url.searchParams.get('callAction');
+        if(!signalId||!state.user)return;
+        try{
+          const {data:sig,error}=await db.from('call_signals').select('id,conversation_id,sender_id,recipient_id,signal_type,payload,created_at')
+            .eq('id',signalId).eq('recipient_id',state.user.id).eq('signal_type','offer').maybeSingle();
+          if(error)throw error;
+          if(!sig)throw new Error('This incoming call is no longer available.');
+          state.callConversation=sig.conversation_id;state.callPeerId=sig.sender_id;state.incomingSignal=sig;
+          const {data:person}=await db.from('profile_directory').select(PROFILE_FIELDS).eq('id',sig.sender_id).maybeSingle();
+          state.callPeerProfile=person||{display_name:'Incoming caller'};state.incomingCallerProfile=person||null;
+          if(action==='decline'){
+            await sendSignal('reject',{},sig.sender_id,sig.conversation_id);
+            toast('Call declined from notification.');
+          }else{
+            $('incomingCallName').textContent=person?.display_name||person?.username||'Someone is calling';
+            $('incomingCallAvatar').innerHTML='';
+            if(person?.avatar_url){const img=document.createElement('img');img.src=person.avatar_url;img.alt='Caller photo';$('incomingCallAvatar').appendChild(img);}
+            else $('incomingCallAvatar').textContent=(person?.display_name||person?.username||'FA').slice(0,2).toUpperCase();
+            $('incomingCallType').textContent=sig.payload?.video?'Incoming video call':'Incoming audio call';
+            $('incomingCallOverlay').classList.remove('hidden');
+          }
+        }catch(error){toast(error.message||'Could not open incoming call.');}
+        url.searchParams.delete('incomingCallSignal');url.searchParams.delete('callAction');
+        window.history.replaceState({},document.title,url.pathname+url.search+url.hash);
+      }
+      if('serviceWorker' in navigator)registerAppServiceWorker();
+      if($('pushNotificationsBtn')){
+        $('pushNotificationsBtn').addEventListener('click',async()=>{
+          try{
+            const reg=await navigator.serviceWorker.getRegistration('/');
+            const sub=reg?await reg.pushManager.getSubscription():null;
+            if(sub)await disablePushNotifications();else if(Notification.permission==='denied'){
+              toast('Open the site controls beside the address bar, set Notifications to Allow, and reload.');
+            }else await enablePushNotifications();
+          }catch(error){toast(error.message||'Could not update notification settings.');}
+        });
+        ['notifyMessages','notifyCalls','notifySound'].forEach(id=>$(id).addEventListener('change',()=>savePushPreferences().catch(e=>toast(e.message))));
+      }
+      $('notificationPromptEnable').addEventListener('click',async()=>{
+        const btn=$('notificationPromptEnable');
+        if(Notification.permission==='denied'){
+          toast('Open the site controls beside the address bar, set Notifications to Allow, then reload this page.');
+          return;
+        }
+        btn.disabled=true;btn.textContent='Enabling…';
+        try{await enablePushNotifications();}
+        catch(error){toast(error.message||'Could not enable notifications.');await refreshPushStatus();}
+        finally{btn.disabled=false;}
+      });
+      $('notificationPromptLater').addEventListener('click',()=>{
+        state.notificationPromptDismissed=true;
+        $('notificationPrompt').classList.add('hidden');
+      });
+
+      const networkConsentKey=()=> 'fa-network-security-consent-v1:'+state.user.id;
+      const networkAccessSessionKey=()=> 'fa-network-access-recorded:'+state.user.id;
+      async function recordAccessIfConsented(){
+        try{
+          if(localStorage.getItem(networkConsentKey())!=='yes')return;
+          if(sessionStorage.getItem(networkAccessSessionKey())==='yes')return;
+          sessionStorage.setItem(networkAccessSessionKey(),'yes');
+          const {error}=await db.functions.invoke('admin-console',{body:{action:'record-access',consent:true,consent_version:'fa-network-v1'}});
+          if(error)console.warn('Network security log was not recorded:',error.message||error);
+        }catch(error){console.warn('Could not record consented network access:',error);}
+      }
+      function askForNetworkConsent(){
+        try{
+          if(localStorage.getItem(networkConsentKey())===null)$('connectionConsentModal').classList.remove('hidden');
+          else recordAccessIfConsented();
+        }catch(_){/* Storage may be disabled; do not collect without a saved consent. */}
+      }
+      $('connectionConsentAllow').addEventListener('click',async()=>{
+        try{localStorage.setItem(networkConsentKey(),'yes');}catch(_){toast('Browser storage is unavailable; network logging was not enabled.');$('connectionConsentModal').classList.add('hidden');return;}
+        $('connectionConsentModal').classList.add('hidden');
+        await recordAccessIfConsented();
+        toast('Optional network security logging enabled on this device.');
+      });
+      $('connectionConsentDecline').addEventListener('click',()=>{
+        try{localStorage.setItem(networkConsentKey(),'no');}catch(_){}
+        $('connectionConsentModal').classList.add('hidden');
+      });
+      $('reportChatBtn').addEventListener('click',()=>{
+        if(!state.activeConversation){toast('Open a conversation first.');return;}
+        $('reportDetails').value='';$('reportChatModal').classList.remove('hidden');
+      });
+      $('submitChatReport').addEventListener('click',async()=>{
+        if(!state.activeConversation||!state.user)return;
+        const btn=$('submitChatReport');btn.disabled=true;
+        try{
+          const {error}=await db.from('message_reports').insert({
+            reporter_id:state.user.id,
+            conversation_id:state.activeConversation,
+            reason:$('reportReason').value,
+            details:$('reportDetails').value.trim()||null
+          });
+          if(error)throw error;
+          $('reportChatModal').classList.add('hidden');
+          toast('Report submitted. Authorized moderators can now review this reported conversation.');
+        }catch(error){toast(error.message||'Could not submit report.');}
+        finally{btn.disabled=false;}
+      });
+
       async function boot(user) {
         state.user = user;
         showApp();
         try {
-          let { data: profile, error } = await db.from('profiles').select(PROFILE_FIELDS).eq('id', user.id).maybeSingle();
+          let { data: profile, error } = await db.from('profiles').select(PROFILE_FIELDS+',role').eq('id', user.id).maybeSingle();
           if (error) throw error;
           if (!profile) {
             // The database trigger normally creates this row. Retry briefly for fresh email confirmations.
             await new Promise(resolve => setTimeout(resolve, 800));
-            ({ data: profile, error } = await db.from('profiles').select(PROFILE_FIELDS).eq('id', user.id).maybeSingle());
+            ({ data: profile, error } = await db.from('profiles').select(PROFILE_FIELDS+',role').eq('id', user.id).maybeSingle());
             if (error) throw error;
           }
           if (!profile) throw new Error('Your profile is still being prepared. Please sign out and sign in again.');
           state.profile = profile;
           renderOwnProfile();
+          askForNetworkConsent();
           watchCallSignals();
           await loadChats();
+          await refreshPushStatus();
+          await handleNotificationRoute();
           await handleIncomingProfileLink();
-        } catch (error) { toast(error.message || 'Could not load your profile.'); }
+        } catch (error) { console.error('App startup failed:', error); toast(error.message || 'Could not load your profile.'); }
       }
 
       function renderOwnProfile() {
@@ -622,6 +898,7 @@
         setAvatar($('myAvatarSmall'), p);
         setAvatar($('myAvatarLarge'), p);
         safeText($('profileCodePopup'), p.public_code);
+        $('adminPanelBtn').classList.toggle('hidden', p.role !== 'admin');
         safeText($('profileLinkPopup'), link);
         if (window.QRCode) {
           $('qrCode').innerHTML = '';
@@ -641,18 +918,29 @@
           list.innerHTML = '<div class="empty-list">No chats yet.<br />Find a person by their Faizan Chat ID to start.</div>';
           safeText($('chatCount'), '0 conversations'); return;
         }
+        // Other users' public contact cards must come from profile_directory.
+        // The profiles table is intentionally private under the current RLS policies.
         const [{ data: members, error: peopleError }, { data: messages, error: messageError }] = await Promise.all([
-          db.from('conversation_members').select(`conversation_id,user_id,profiles(${PROFILE_FIELDS})`).in('conversation_id', ids),
+          db.from('conversation_members').select('conversation_id,user_id').in('conversation_id', ids),
           db.from('messages').select('id,conversation_id,sender_id,body,created_at').in('conversation_id', ids).order('created_at', { ascending: false }).limit(1000)
         ]);
         if (peopleError) throw peopleError;
         if (messageError) throw messageError;
+        const otherUserIds = [...new Set((members || []).filter(m => m.user_id !== state.user.id).map(m => m.user_id))];
+        let directoryById = new Map();
+        if (otherUserIds.length) {
+          const { data: directoryRows, error: directoryError } = await db.from('profile_directory')
+            .select(PROFILE_FIELDS).in('id', otherUserIds);
+          if (directoryError) throw directoryError;
+          directoryById = new Map((directoryRows || []).map(person => [person.id, person]));
+        }
         const latest = new Map();
         (messages || []).forEach(m => { if (!latest.has(m.conversation_id)) latest.set(m.conversation_id, m); });
         const chats = ids.map(id => {
           const member = (members || []).find(m => m.conversation_id === id && m.user_id !== state.user.id);
-          if (!member || !member.profiles) return null;
-          return { id, person: member.profiles, last: latest.get(id) || null };
+          const person = member ? directoryById.get(member.user_id) : null;
+          if (!person) return null;
+          return { id, person, last: latest.get(id) || null };
         }).filter(Boolean).sort((a,b) => new Date((b.last && b.last.created_at) || 0) - new Date((a.last && a.last.created_at) || 0));
         list.innerHTML = '';
         safeText($('chatCount'), `${chats.length} ${chats.length === 1 ? 'conversation' : 'conversations'}`);
@@ -670,27 +958,93 @@
       }
 
       async function findUser(query, openAfter = false) {
-        const cleaned = (query || '').trim();
-        if (!cleaned) { toast('Enter a username or chat ID.'); return null; }
-        const code = cleaned.toUpperCase().replace(/^.*[?&]user=/, '').split(/[&#\s]/)[0];
-        let request = db.from('profiles').select(PROFILE_FIELDS);
-        if (/^FA-\d{6}$/i.test(code)) request = request.eq('public_code', code);
-        else request = request.ilike('username', cleaned.replace(/^@/, ''));
-        const { data, error } = await request.limit(10);
-        if (error) throw error;
-        const matches = (data || []).filter(p => p.id !== state.user.id);
-        if (!matches.length) { toast('No account found with that ID or username.'); return null; }
-        if (openAfter) { await openDirectMessage(matches[0]); return matches[0]; }
-        const holder = $('searchResults'); holder.innerHTML = '';
+        const cleaned = String(query || '').trim();
+        const holder = $('searchResults');
+        if (!cleaned) {
+          holder.innerHTML = '<div class="empty-list">Enter a username, display name, or FA-123456 ID.</div>';
+          toast('Enter a name, username, or chat ID.');
+          return null;
+        }
+
+        // Accept copied profile links, @usernames, IDs with spaces, and partial names.
+        let term = cleaned;
+        try {
+          if (/^https?:\/\//i.test(term)) {
+            const parsed = new URL(term);
+            term = parsed.searchParams.get('user') || parsed.searchParams.get('id') || parsed.pathname.split('/').filter(Boolean).pop() || term;
+          }
+        } catch (_) { /* Keep the user's original search term. */ }
+        term = String(term).trim().replace(/^@/, '').trim();
+        const normalizedCode = term.toUpperCase().replace(/[\s_]/g, '-');
+        const isChatId = /^FA-?\d{6}$/i.test(normalizedCode);
+
+        // Keep PostgREST filter syntax safe while supporting partial username/name searches.
+        const safeTerm = term.replace(/[^a-zA-Z0-9 _.-]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!isChatId && safeTerm.length < 2) {
+          holder.innerHTML = '<div class="empty-list">Type at least 2 letters to search.</div>';
+          toast('Type at least 2 letters to search.');
+          return null;
+        }
+
+        holder.innerHTML = '<div class="empty-list">Searching accounts…</div>';
+        let request = db.from('profile_directory').select(PROFILE_FIELDS);
+        if (isChatId) {
+          const exactCode = normalizedCode.replace(/^FA(\d{6})$/, 'FA-$1');
+          request = request.eq('public_code', exactCode);
+        } else {
+          const escaped = safeTerm.replace(/[%*,()]/g, ' ').trim();
+          // Search username, visible display name, or public chat ID. Partial matches work.
+          request = request.or(`username.ilike.%${escaped}%,display_name.ilike.%${escaped}%,public_code.ilike.%${escaped}%`);
+        }
+
+        const { data, error } = await request.order('username', { ascending: true }).limit(20);
+        if (error) {
+          holder.innerHTML = '<div class="empty-list">Search failed. Please refresh and try again.</div>';
+          console.error('User search failed:', error);
+          throw new Error(`User search failed: ${error.message || 'Database permission or connection error'}`);
+        }
+
+        const matches = (data || []).filter(person => person.id !== state.user.id);
+        if (!matches.length) {
+          holder.innerHTML = '<div class="empty-list">No matching account found. Check the username or FA chat ID.</div>';
+          toast('No matching account found.');
+          return null;
+        }
+
+        if (openAfter) {
+          await openDirectMessage(matches[0]);
+          return matches[0];
+        }
+
+        holder.innerHTML = '';
         matches.forEach(person => {
-          const button = document.createElement('button'); button.type = 'button'; button.className = 'result-user';
-          const avatar = document.createElement('div'); avatar.className = 'avatar'; avatar.style.width = '36px'; avatar.style.height = '36px'; avatar.style.flexBasis = '36px'; setAvatar(avatar, person);
-          const label = document.createElement('div'); label.style.minWidth = '0'; label.style.flex = '1';
-          const name = document.createElement('strong'); name.textContent = person.display_name || person.username; name.style.display = 'block'; name.style.fontSize = '.79rem';
-          const codeLabel = document.createElement('span'); codeLabel.textContent = `${person.public_code} · @${person.username}`; codeLabel.style.color = '#92a9d0'; codeLabel.style.fontSize = '.65rem';
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'result-user';
+          const avatar = document.createElement('div');
+          avatar.className = 'avatar';
+          avatar.style.width = '36px';
+          avatar.style.height = '36px';
+          avatar.style.flexBasis = '36px';
+          setAvatar(avatar, person);
+          const label = document.createElement('div');
+          label.style.minWidth = '0';
+          label.style.flex = '1';
+          const name = document.createElement('strong');
+          name.textContent = person.display_name || person.username;
+          name.style.display = 'block';
+          name.style.fontSize = '.79rem';
+          const codeLabel = document.createElement('span');
+          codeLabel.textContent = `${person.public_code || 'No chat ID'} · @${person.username}`;
+          codeLabel.style.color = '#92a9d0';
+          codeLabel.style.fontSize = '.65rem';
           label.append(name, codeLabel);
-          const start = document.createElement('span'); start.className = 'primary-btn'; start.textContent = 'Chat';
-          button.append(avatar, label, start); button.addEventListener('click', () => openDirectMessage(person)); holder.appendChild(button);
+          const start = document.createElement('span');
+          start.className = 'primary-btn';
+          start.textContent = 'Chat';
+          button.append(avatar, label, start);
+          button.addEventListener('click', () => openDirectMessage(person));
+          holder.appendChild(button);
         });
         return matches[0];
       }
@@ -738,7 +1092,17 @@
           else if (message.media_type === 'audio' || message.media_type === 'voice') { const a=document.createElement('audio'); a.src=url; a.controls=true; bubble.appendChild(a); }
           else { const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener'; a.textContent=message.file_name||'Download file'; a.style.color='#a8edff'; bubble.appendChild(a); }
           if (message.body) { const caption=document.createElement('div'); caption.textContent=message.body; bubble.appendChild(caption); }
-        } else bubble.textContent = message.body || '';
+        } else {
+          const body=message.body||'';
+          const urlPattern=/(https?:\/\/[^\s<>"']+)/gi;
+          let last=0,match;
+          while((match=urlPattern.exec(body))!==null){
+            if(match.index>last)bubble.appendChild(document.createTextNode(body.slice(last,match.index)));
+            const link=document.createElement('a');link.href=match[0];link.target='_blank';link.rel='noopener noreferrer';link.textContent=match[0];link.style.color='#8fdcff';link.style.overflowWrap='anywhere';
+            bubble.appendChild(link);last=urlPattern.lastIndex;
+          }
+          if(last<body.length)bubble.appendChild(document.createTextNode(body.slice(last)));
+        }
         const time = document.createElement('div'); time.className = 'message-time'; time.textContent = formatTime(message.created_at);
         line.append(bubble, time); area.appendChild(line); area.scrollTop = area.scrollHeight;
       }
@@ -764,6 +1128,7 @@
           const { data, error } = await db.from('messages').insert({ conversation_id: state.activeConversation, sender_id: state.user.id, body }).select('id,conversation_id,sender_id,body,created_at').single();
           if (error) throw error;
           appendMessage(data); $('messageInput').value = ''; await loadChats();
+          triggerPush('message',data.id);
         } catch (error) { toast(error.message || 'Message could not be sent.'); }
         finally { $('messageInput').disabled = false; $('messageInput').focus(); }
       });
@@ -780,6 +1145,7 @@
         const mediaType=forcedType || (file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':file.type.startsWith('audio/')?'audio':'file');
         const {data,error}=await db.from('messages').insert({conversation_id:state.activeConversation,sender_id:state.user.id,body:'',media_url:path,media_type:mediaType,file_name:file.name,mime_type:file.type,file_size:file.size}).select('id,conversation_id,sender_id,body,media_type,media_url,file_name,mime_type,file_size,created_at').single();
         if(error) throw error; appendMessage(data); await loadChats();
+        triggerPush('message',data.id);
       }
       $('attachBtn').addEventListener('click',()=>$('attachmentInput').click());
       $('attachmentInput').addEventListener('change',async()=>{const f=$('attachmentInput').files[0];if(!f)return;try{await uploadChatFile(f);toast('Attachment sent.');}catch(e){toast(e.message||'Upload failed.');}finally{$('attachmentInput').value='';}});
@@ -826,14 +1192,16 @@
       }
       async function sendSignal(type,payload={},recipient=state.callPeerId,conversationId=state.callConversation){
         if(!recipient||!conversationId||!state.user)throw new Error('Call session is not ready. Open a chat and try again.');
-        const {error}=await db.from('call_signals').insert({
+        const {data,error}=await db.from('call_signals').insert({
           conversation_id:conversationId,
           sender_id:state.user.id,
           recipient_id:recipient,
           signal_type:type,
           payload
-        });
+        }).select('id').single();
         if(error)throw error;
+        if(type==='offer'&&data?.id)triggerPush('call',data.id);
+        return data;
       }
       async function playRemoteAudio(){
         const audio=$('remoteCallAudio');
@@ -1034,7 +1402,7 @@
                 state.incomingSignal=sig;
                 state.callConversation=sig.conversation_id;
                 state.callPeerId=sig.sender_id;
-                const {data:caller}=await db.from('profiles').select(PROFILE_FIELDS).eq('id',sig.sender_id).maybeSingle();
+                const {data:caller}=await db.from('profile_directory').select(PROFILE_FIELDS).eq('id',sig.sender_id).maybeSingle();
                 state.incomingCallerProfile=caller||null;
                 state.callPeerProfile=caller||{display_name:'Incoming caller'};
                 $('incomingCallName').textContent=caller?.display_name||caller?.username||'Someone is calling';
@@ -1213,5 +1581,26 @@
       })();
     })();
   </script>
+
+  <div id="connectionConsentModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="connectionConsentTitle">
+    <div class="modal glass" style="max-width:520px">
+      <div class="modal-head"><h3 id="connectionConsentTitle">Privacy choice: network security logs</h3></div>
+      <p class="privacy-choice-copy">You can optionally allow Faizan Ahmed Chats to save your public network IP address and browser type when you use this device. This helps the service investigate spam and account abuse. An authorized admin may see this information and may request an approximate city/country estimate from the IP address. IP location is not GPS and can be inaccurate. You can continue using chats without sharing this data.</p>
+      <div class="privacy-choice-actions">
+        <button id="connectionConsentAllow" class="primary-btn" type="button">Allow security logging</button>
+        <button id="connectionConsentDecline" class="quiet-btn" type="button">Not now</button>
+      </div>
+    </div>
+  </div>
+  <div id="reportChatModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="reportChatTitle">
+    <div class="modal glass report-modal" style="max-width:500px">
+      <div class="modal-head"><h3 id="reportChatTitle">Report this conversation</h3><button class="icon-btn" type="button" data-close="reportChatModal" aria-label="Close">×</button></div>
+      <p class="modal-copy">Only authorized moderators can review a conversation after a user submits a report. Please choose a reason and include relevant details.</p>
+      <div class="field"><label for="reportReason">Reason</label><select id="reportReason"><option value="harassment">Harassment or bullying</option><option value="spam">Spam or scam</option><option value="threats">Threats or violence</option><option value="impersonation">Impersonation</option><option value="other">Other</option></select></div>
+      <div class="field"><label for="reportDetails">Details (optional)</label><textarea id="reportDetails" maxlength="1200" placeholder="Tell the moderation team what happened…"></textarea></div>
+      <button id="submitChatReport" class="primary-btn" type="button" style="width:100%">Submit report</button>
+    </div>
+  </div>
+
 </body>
 </html>
